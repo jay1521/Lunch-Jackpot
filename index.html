@@ -10,14 +10,13 @@
     <link href="https://fonts.googleapis.com/css2?family=Titan+One&family=Nunito:wght@400;700;900&display=swap" rel="stylesheet">
     
     <style>
-        /* CARTOON THEME */
         :root {
             --bg-cream: #FFF8E1;
             --accent-orange: #FF8A65;
             --accent-red: #FF5252;
             --accent-blue: #4FC3F7;
             --accent-green: #81C784;
-            --accent-purple: #BA68C8; /* New for 21+ */
+            --accent-purple: #BA68C8;
             --border-color: #1a1a1a;
         }
 
@@ -58,31 +57,24 @@
             box-shadow: 3px 3px 0px 0px #000;
             transform: translateY(-2px);
         }
-        /* Purple active state for 21+ tab */
         #tab-bar.active { background: var(--accent-purple); }
 
         .roulette-window { 
-            height: 100px; 
-            overflow: hidden; 
-            position: relative; 
-            border-radius: 16px; 
-            background: #fff; 
+            height: 100px; overflow: hidden; position: relative; 
+            border-radius: 16px; background: #fff; 
             border: 4px solid var(--border-color);
             box-shadow: inset 0 0 10px rgba(0,0,0,0.1);
         }
         .roulette-window::after {
-            content: "▼";
-            position: absolute;
-            top: -5px; left: 50%; transform: translateX(-50%);
-            color: var(--accent-red); font-size: 24px; z-index: 10;
-            text-shadow: 2px 2px 0 #000;
+            content: "▼"; position: absolute; top: -5px; left: 50%; transform: translateX(-50%);
+            color: var(--accent-red); font-size: 24px; z-index: 10; text-shadow: 2px 2px 0 #000;
         }
 
         .roulette-belt { display: flex; flex-direction: column; align-items: center; transform: translateY(0); }
         .roulette-item { 
             height: 100px; display: flex; align-items: center; justify-content: center; 
-            font-family: 'Titan One', cursive; font-size: 1.4rem; color: #333; text-align: center; 
-            padding: 0 10px; width: 100%; background-color: #fff;
+            font-family: 'Titan One', cursive; font-size: 1.4rem; color: #333; 
+            text-align: center; padding: 0 10px; width: 100%; background-color: #fff;
         }
         .roulette-item:nth-child(odd) { background-color: #E1F5FE; }
         .roulette-item:nth-child(even) { background-color: #FFF3E0; }
@@ -285,7 +277,7 @@
     <script>
         // Global State
         let currentMode = 'food'; // 'food' or 'bar'
-        let restaurants = []; // Holds current list (either food or bar)
+        let restaurants = []; // Holds current list
         let favs = JSON.parse(localStorage.getItem('jpot_favs') || '[]');
         let history = JSON.parse(localStorage.getItem('jpot_hist') || '[]');
         let lat, lon, currentWinner, map, userMarker, restaurantMarkers = [];
@@ -296,7 +288,6 @@
             document.getElementById('view-' + id).classList.remove('hidden');
             document.getElementById('tab-' + id).classList.add('active');
             
-            // Map handling
             if(id === 'map') setTimeout(() => { if(map) map.invalidateSize(); else initMap(); }, 100);
             if(id === 'history') renderHistory();
         }
@@ -323,15 +314,13 @@
 
         // --- SEARCH ENGINE ---
         async function runSearch(mode) {
-            currentMode = mode; // Update global mode
+            currentMode = mode;
             const loader = document.getElementById('loader');
             loader.classList.remove('hidden');
-            
-            // Get Inputs based on mode
             const zip = document.getElementById(mode + '-zip').value.trim();
             
             try {
-                // 1. Geolocation
+                // 1. Geolocation Logic
                 if (zip) {
                     const r = await fetch(`https://nominatim.openstreetmap.org/search?postalcode=${zip}&country=US&format=json`);
                     const d = await r.json();
@@ -339,11 +328,21 @@
                     lat = parseFloat(d[0].lat); lon = parseFloat(d[0].lon);
                 } else {
                     const pos = await new Promise((resolve, reject) => {
+                        if (!navigator.geolocation) {
+                            reject(new Error("Geolocation not supported."));
+                            return;
+                        }
                         navigator.geolocation.getCurrentPosition(resolve, (err) => {
-                            if(err.code === 1) reject(new Error("Permission Denied: Allow location."));
-                            else if(err.code === 3) reject(new Error("Timeout: Try Zip Code."));
-                            else reject(err);
-                        }, { enableHighAccuracy: false, timeout: 15000, maximumAge: 60000 });
+                            // Specific iOS error handling
+                            const msg = err.message || "";
+                            if (msg.includes("string did not match") || err.code === 2) {
+                                reject(new Error("Weak GPS signal. Try Zip Code."));
+                            } else if (err.code === 1) {
+                                reject(new Error("Permission Denied. Allow Location."));
+                            } else {
+                                reject(new Error("GPS Error. Try Zip Code."));
+                            }
+                        }, { enableHighAccuracy: false, timeout: 10000, maximumAge: 60000 });
                     });
                     lat = pos.coords.latitude; lon = pos.coords.longitude;
                 }
@@ -357,8 +356,7 @@
                     const filter = cuisine !== 'restaurant' ? `["cuisine"~"${cuisine}"]` : '';
                     query = `[out:json];(node["amenity"~"restaurant|fast_food"]${filter}(around:${radius},${lat},${lon}););out 30;`;
                 } else {
-                    // Bar Mode
-                    const vibe = document.getElementById('bar-vibe').value; // pub, nightclub, etc
+                    const vibe = document.getElementById('bar-vibe').value; 
                     const filter = vibe !== 'bar' ? `["amenity"="${vibe}"]` : '["amenity"~"bar|pub|nightclub|lounge|biergarten"]';
                     query = `[out:json];(node${filter}(around:${radius},${lat},${lon}););out 30;`;
                 }
@@ -369,7 +367,6 @@
                 restaurants = data.elements.filter(e => e.tags.name).map(e => ({
                     id: e.id.toString(),
                     name: e.tags.name,
-                    cuisine: (e.tags.cuisine || 'food').split(';')[0].toLowerCase(),
                     type: (e.tags.amenity || 'Place').replace('_', ' ').toUpperCase(),
                     rating: e.tags.rating || (Math.random() * 1.2 + 3.8).toFixed(1),
                     lat: e.lat, lon: e.lon,
@@ -377,7 +374,6 @@
                     dist: calcDist(lat, lon, e.lat, e.lon)
                 }));
 
-                // 3. Render
                 renderList(mode);
                 if(map) updateMapMarkers();
                 document.getElementById('spin-' + mode).disabled = false;
@@ -386,7 +382,7 @@
 
             } catch(e) { 
                 console.error(e);
-                alert("Location Error: " + e.message + "\n\nTip: Try entering a Zip Code if GPS fails."); 
+                alert("Location Error: " + e.message); 
                 loader.classList.add('hidden'); 
             }
         }
@@ -411,7 +407,7 @@
                 </div>`).join('');
         }
 
-        // --- SPIN LOGIC (Generic for both) ---
+        // --- SPIN LOGIC (Generic) ---
         function setupSpin(mode) {
             document.getElementById('spin-' + mode).onclick = () => {
                 const pool = [];
@@ -446,7 +442,6 @@
                 }, {once: true});
             };
             
-            // Share Button Logic
             document.getElementById('share-' + mode).onclick = async () => {
                 if(currentWinner && navigator.share) await navigator.share({ title: 'Jackpot Winner', text: `Let's go to: ${currentWinner.name}`, url: `http://googleusercontent.com/maps.google.com/?q=${currentWinner.lat},${currentWinner.lon}` });
             };
@@ -501,17 +496,11 @@
         }
 
         function toggleFav(id) { 
-            const i = favs.indexOf(id); 
-            if(i>-1) favs.splice(i,1); else favs.push(id); 
+            const i = favs.indexOf(id); if(i>-1) favs.splice(i,1); else favs.push(id); 
             localStorage.setItem('jpot_favs', JSON.stringify(favs)); 
-            // Refresh current list if possible
             if(restaurants.length > 0) renderList(currentMode); 
         }
-        
-        function calcDist(la1,lo1,la2,lo2) { 
-            const R=3958.8, dLa=(la2-la1)*Math.PI/180, dLo=(lo2-lo1)*Math.PI/180, a=Math.sin(dLa/2)**2+Math.cos(la1*Math.PI/180)*Math.cos(la2*Math.PI/180)*Math.sin(dLo/2)**2; 
-            return (R*2*Math.atan2(Math.sqrt(a),Math.sqrt(1-a))).toFixed(1); 
-        }
+        function calcDist(la1,lo1,la2,lo2) { const R=3958.8, dLa=(la2-la1)*Math.PI/180, dLo=(lo2-lo1)*Math.PI/180, a=Math.sin(dLa/2)**2+Math.cos(la1*Math.PI/180)*Math.cos(la2*Math.PI/180)*Math.sin(dLo/2)**2; return (R*2*Math.atan2(Math.sqrt(a),Math.sqrt(1-a))).toFixed(1); }
     </script>
 </body>
 </html>
