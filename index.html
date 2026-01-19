@@ -3,16 +3,39 @@
 <head>
     <meta charset="UTF-8">
     <meta name="viewport" content="width=device-width, initial-scale=1.0, maximum-scale=1.0, user-scalable=no">
-    <title>Lunch Jackpot Elite</title>
+    <title>Lunch Jackpot Ultimate</title>
     <script src="https://cdn.tailwindcss.com"></script>
+    <link rel="stylesheet" href="https://unpkg.com/leaflet@1.9.4/dist/leaflet.css" />
+    <script src="https://unpkg.com/leaflet@1.9.4/dist/leaflet.js"></script>
     <style>
         body {
-            background: linear-gradient(135deg, #ff00cc, #333399, #00ccff);
+            background: linear-gradient(135deg, #4338ca, #7e22ce, #be185d);
             background-size: 400% 400%;
             animation: gradientBG 15s ease infinite;
         }
         @keyframes gradientBG { 0% { background-position: 0% 50%; } 50% { background-position: 100% 50%; } 100% { background-position: 0% 50%; } }
-        .glass-card { background: rgba(255, 255, 255, 0.92); backdrop-filter: blur(10px); -webkit-backdrop-filter: blur(10px); }
+        .glass-card { background: rgba(255, 255, 255, 0.95); backdrop-filter: blur(12px); -webkit-backdrop-filter: blur(12px); border: 1px solid rgba(255,255,255,0.4); }
+        
+        /* Map Pulse Blue Dot */
+        .user-location-dot {
+            width: 14px; height: 14px;
+            background-color: #3b82f6;
+            border: 2px solid white;
+            border-radius: 50%;
+            box-shadow: 0 0 10px rgba(59, 130, 246, 0.8);
+            position: relative;
+        }
+        .user-location-dot::after {
+            content: "";
+            position: absolute;
+            top: -4px; left: -4px;
+            width: 18px; height: 18px;
+            border-radius: 50%;
+            background: rgba(59, 130, 246, 0.4);
+            animation: pulse 2s infinite;
+        }
+        @keyframes pulse { 0% { transform: scale(1); opacity: 1; } 100% { transform: scale(3); opacity: 0; } }
+
         .roulette-window { height: 80px; overflow: hidden; position: relative; border-radius: 12px; background: #fff; border: 4px solid #fbbf24; }
         .roulette-belt { display: flex; flex-direction: column; align-items: center; transform: translateY(0); }
         .roulette-item { height: 80px; display: flex; align-items: center; justify-content: center; font-weight: 800; font-size: 1.1rem; color: #333; text-align: center; padding: 0 10px; width: 100%; }
@@ -20,315 +43,286 @@
         @keyframes slideUp { 0% { transform: translateY(0); } 100% { transform: translateY(var(--scroll-distance)); } }
         .pop-in { animation: pop 0.4s cubic-bezier(0.34, 1.56, 0.64, 1) forwards; }
         @keyframes pop { 0% { transform: scale(0.9); opacity: 0; } 100% { transform: scale(1); opacity: 1; } }
+        
+        .tab-btn.active { background: white; color: #4338ca; border-radius: 12px; box-shadow: 0 4px 12px rgba(0,0,0,0.1); }
         .loader { border: 3px solid rgba(255,255,255,0.3); border-top: 3px solid white; border-radius: 50%; width: 18px; height: 18px; animation: spin 1s linear infinite; }
         @keyframes spin { 0% { transform: rotate(0deg); } 100% { transform: rotate(360deg); } }
-        .star-btn.active { color: #f59e0b; }
-        .hours-content { max-height: 0; overflow: hidden; transition: max-height 0.3s ease-out; }
-        .hours-row.active .hours-content { max-height: 100px; }
+        #map-container { height: 400px; width: 100%; border-radius: 16px; border: 4px solid white; overflow: hidden; }
+        #winner-photo { width: 100%; height: 160px; object-fit: cover; border-radius: 12px; margin-bottom: 12px; background: #eee; }
     </style>
 </head>
-<body class="font-sans min-h-screen p-4 flex flex-col items-center pb-20">
+<body class="font-sans min-h-screen pb-24">
 
-    <header class="w-full max-w-md my-6 text-center text-white">
-        <h1 class="text-4xl font-black mb-1 drop-shadow-lg">🎰 Lunch Jackpot</h1>
-        <div class="flex justify-center items-center gap-2 bg-white/20 py-1 px-4 rounded-full inline-flex backdrop-blur-sm">
+    <header class="w-full max-w-md mx-auto p-6 text-center text-white">
+        <h1 class="text-4xl font-black drop-shadow-lg italic">JACKPOT 🎰</h1>
+        <div class="mt-2 flex justify-center items-center gap-2 bg-black/10 py-1 px-4 rounded-full inline-flex text-[9px] font-black uppercase tracking-widest">
             <div id="loader" class="loader hidden"></div>
-            <p class="text-xs font-bold" id="location-status">Ready to Hunt</p>
+            <span id="location-status">Ready to Win</span>
         </div>
     </header>
 
-    <main class="w-full max-w-md flex flex-col gap-6">
+    <nav class="fixed bottom-4 left-1/2 -translate-x-1/2 w-[94%] max-w-md glass-card rounded-2xl p-1 flex justify-between items-center z-[1000] shadow-2xl">
+        <button onclick="switchTab('jackpot')" id="tab-jackpot" class="tab-btn active flex-1 py-3 text-[9px] font-black uppercase transition-all">🎰 Play</button>
+        <button onclick="switchTab('map')" id="tab-map" class="tab-btn flex-1 py-3 text-[9px] font-black uppercase transition-all">🗺️ Map</button>
+        <button onclick="switchTab('bill')" id="tab-bill" class="tab-btn flex-1 py-3 text-[9px] font-black uppercase transition-all">💸 Bill</button>
+        <button onclick="switchTab('history')" id="tab-history" class="tab-btn flex-1 py-3 text-[9px] font-black uppercase transition-all">📜 Wins</button>
+    </nav>
+
+    <main class="w-full max-w-md mx-auto px-4">
         
-        <div class="glass-card p-4 rounded-2xl shadow-lg border border-white/50">
-            <div class="grid grid-cols-2 gap-3 mb-3">
-                <div>
-                    <label class="block text-[10px] font-black text-gray-400 uppercase mb-1">Location</label>
-                    <input type="text" id="zip-input" placeholder="Zip or GPS" class="w-full p-2 bg-white border border-gray-200 rounded-lg text-xs font-bold outline-none">
-                </div>
-                <div>
-                    <label class="block text-[10px] font-black text-gray-400 uppercase mb-1">Max Budget</label>
-                    <select id="budget-input" class="w-full p-2 bg-white border border-gray-200 rounded-lg text-xs font-bold outline-none">
-                        <option value="4">Any Price</option>
-                        <option value="1">$ - Cheap</option>
-                        <option value="2">$$ - Mid</option>
-                        <option value="3">$$$ - Fancy</option>
+        <div id="view-jackpot" class="tab-view flex flex-col gap-4">
+            <div class="glass-card p-4 rounded-2xl">
+                <div class="grid grid-cols-2 gap-2 mb-3">
+                    <input type="text" id="zip-input" placeholder="Zip or GPS" class="p-2 border rounded-lg text-xs font-bold outline-none">
+                    <select id="budget-input" class="p-2 border rounded-lg text-xs font-bold outline-none">
+                        <option value="4">Any Budget</option>
+                        <option value="1">$ Cheap</option>
+                        <option value="2">$$ Mid</option>
                     </select>
                 </div>
-            </div>
-            <div class="grid grid-cols-2 gap-3 mb-4">
-                <div>
-                    <label class="block text-[10px] font-black text-gray-400 uppercase mb-1">Cuisine</label>
-                    <select id="cuisine-input" class="w-full p-2 bg-white border border-gray-200 rounded-lg text-xs font-bold outline-none">
-                        <option value="all">🎡 All Food</option>
+                <div class="grid grid-cols-2 gap-2 mb-4">
+                    <select id="cuisine-input" class="p-2 border rounded-lg text-xs font-bold outline-none">
+                        <option value="food">🎡 All Cuisines</option>
                         <option value="pizza">🍕 Pizza</option>
                         <option value="mexican">🌮 Mexican</option>
-                        <option value="asian">🍣 Asian</option>
                         <option value="burger">🍔 Burgers</option>
+                        <option value="sushi">🍣 Japanese</option>
                     </select>
-                </div>
-                <div class="flex flex-col justify-end pb-1">
-                    <label class="flex items-center gap-2 cursor-pointer">
+                    <label class="flex items-center gap-2 justify-center bg-white/50 rounded-lg">
                         <input type="checkbox" id="open-now-check" class="w-4 h-4 accent-pink-600">
-                        <span class="text-[10px] font-black text-gray-600 uppercase">Open Now</span>
+                        <span class="text-[9px] font-black uppercase">Open Now</span>
                     </label>
                 </div>
+                <button id="search-btn" class="w-full bg-slate-900 text-white text-[10px] font-black py-3 rounded-xl uppercase">Update Local List</button>
             </div>
-            <button id="search-btn" class="w-full bg-slate-800 text-white text-xs font-black py-3 rounded-lg shadow-md">REFRESH RESTAURANTS</button>
+
+            <div id="roulette-area" class="hidden"><div class="roulette-window"><div id="roulette-belt" class="roulette-belt"></div></div></div>
             
-            <div id="roulette-area" class="mt-4 hidden"><div class="roulette-window"><div id="roulette-belt" class="roulette-belt"></div></div></div>
-            
-            <div id="final-result-card" class="hidden mt-4 p-5 bg-white rounded-xl border-4 border-yellow-400 shadow-xl pop-in">
-                <h2 id="winner-name" class="text-2xl font-black text-gray-900 leading-tight">--</h2>
+            <div id="final-result-card" class="hidden glass-card p-4 rounded-2xl border-4 border-yellow-400 pop-in">
+                <img id="winner-photo" src="" alt="Restaurant">
+                <h2 id="winner-name" class="text-2xl font-black text-gray-900">--</h2>
                 <div id="winner-rating" class="text-orange-500 font-bold text-sm my-1"></div>
                 <p id="winner-details" class="text-gray-500 text-[10px] font-black mb-4 uppercase">--</p>
                 <div class="grid grid-cols-2 gap-2">
                     <a id="maps-link" href="#" target="_blank" class="bg-indigo-600 text-white text-[10px] font-black py-3 text-center rounded-full uppercase">🗺️ Directions</a>
                     <button id="share-btn" class="bg-emerald-500 text-white text-[10px] font-black py-3 text-center rounded-full uppercase">📤 Share</button>
                 </div>
-                <a id="website-link" href="#" target="_blank" class="block mt-3 text-indigo-600 text-[10px] font-black text-center underline uppercase">Visit Website</a>
             </div>
-            <button id="pick-btn" disabled class="w-full mt-4 bg-gradient-to-r from-pink-600 to-purple-700 text-white font-black py-4 rounded-xl text-xl shadow-lg transition-all active:scale-95">🎲 SPIN FOR LUNCH</button>
+
+            <button id="pick-btn" disabled class="w-full bg-gradient-to-r from-pink-600 to-indigo-600 text-white font-black py-5 rounded-2xl text-xl shadow-xl active:scale-95 transition-all">🎲 SPIN THE WHEEL</button>
+
+            <div class="glass-card p-4 rounded-2xl">
+                <h3 class="text-[10px] font-black text-gray-400 uppercase mb-3 tracking-widest">Restaurant List</h3>
+                <div id="restaurant-list" class="flex flex-col gap-2 max-h-60 overflow-y-auto"></div>
+            </div>
         </div>
 
-        <div class="glass-card p-5 rounded-2xl shadow-xl border border-white/50">
-            <h3 class="text-xs font-black text-indigo-600 uppercase mb-4 tracking-widest border-b pb-2">💸 Bill Management</h3>
-            
-            <div class="mb-6">
-                <p class="text-[10px] font-black text-gray-400 uppercase mb-2">1. Split the Bill</p>
+        <div id="view-map" class="tab-view hidden flex flex-col gap-4">
+            <div class="glass-card p-2 rounded-2xl">
+                <div id="map-container"></div>
+                <div class="p-3 text-center">
+                    <p class="text-[10px] font-black text-indigo-600 uppercase">You are the blue pulsing dot 🔵</p>
+                </div>
+            </div>
+        </div>
+
+        <div id="view-bill" class="tab-view hidden flex flex-col gap-4">
+            <div class="glass-card p-5 rounded-2xl shadow-lg">
+                <h3 class="text-xs font-black text-indigo-600 uppercase mb-4 tracking-widest border-b pb-2">Split the Bill</h3>
                 <div class="grid grid-cols-3 gap-2 mb-3">
-                    <input type="number" id="bill-total" placeholder="Total $" class="p-2 border border-gray-200 rounded-lg text-xs font-bold outline-none">
-                    <select id="tip-percent" class="p-2 border border-gray-200 rounded-lg text-xs font-bold outline-none">
-                        <option value="0.15">15% Tip</option>
-                        <option value="0.18" selected>18% Tip</option>
-                        <option value="0.20">20% Tip</option>
-                    </select>
-                    <input type="number" id="people-count" placeholder="# People" class="p-2 border border-gray-200 rounded-lg text-xs font-bold outline-none">
+                    <div><label class="text-[8px] font-black uppercase text-gray-400 ml-1">Total $</label><input type="number" id="bill-total" class="w-full p-2 border rounded-lg text-xs font-bold"></div>
+                    <div><label class="text-[8px] font-black uppercase text-gray-400 ml-1">Tip %</label><select id="tip-percent" class="w-full p-2 border rounded-lg text-xs font-bold"><option value="0.18">18%</option><option value="0.20">20%</option></select></div>
+                    <div><label class="text-[8px] font-black uppercase text-gray-400 ml-1">People</label><input type="number" id="people-count" class="w-full p-2 border rounded-lg text-xs font-bold"></div>
                 </div>
-                <div id="split-result" class="bg-indigo-50 p-3 rounded-lg text-center text-indigo-800 text-xs font-black uppercase">
-                    Enter details to calculate split
-                </div>
+                <div id="split-result" class="bg-indigo-50 p-4 rounded-xl text-center text-indigo-800 font-black text-xs uppercase border border-indigo-100 italic">Waiting...</div>
             </div>
 
-            <div>
-                <p class="text-[10px] font-black text-gray-400 uppercase mb-2">2. Payer Roulette (Up to 10)</p>
-                <div id="names-list" class="grid grid-cols-2 gap-2 mb-3">
-                    <input type="text" class="payer-input p-2 border border-gray-200 rounded-lg text-[11px] font-bold bg-white/50" placeholder="Name 1">
-                    <input type="text" class="payer-input p-2 border border-gray-200 rounded-lg text-[11px] font-bold bg-white/50" placeholder="Name 2">
+            <div class="glass-card p-5 rounded-2xl shadow-lg">
+                <h3 class="text-xs font-black text-emerald-600 uppercase mb-4 tracking-widest border-b pb-2">Payer Roulette</h3>
+                <div id="names-grid" class="grid grid-cols-2 gap-2 mb-3">
+                    <input type="text" class="payer-input p-2 border rounded-lg text-xs font-bold" placeholder="Name 1">
+                    <input type="text" class="payer-input p-2 border rounded-lg text-xs font-bold" placeholder="Name 2">
                 </div>
-                <div class="flex gap-2 mb-4">
-                    <button onclick="addPayerField()" class="flex-1 bg-gray-100 text-[9px] font-black py-2 rounded-lg text-gray-500 uppercase">+ Add Name</button>
-                    <button onclick="resetPayers()" class="flex-1 bg-gray-100 text-[9px] font-black py-2 rounded-lg text-gray-500 uppercase">Clear All</button>
+                <button onclick="spinForPayer()" class="w-full bg-emerald-600 text-white font-black py-4 rounded-xl shadow-lg uppercase text-xs">Who Pays?</button>
+                <div id="payer-result-box" class="hidden p-6 bg-emerald-600 text-white rounded-2xl text-center mt-4 pop-in shadow-inner">
+                    <h2 id="payer-result-name" class="text-3xl font-black italic">--</h2>
                 </div>
-                <div id="bill-winner-box" class="hidden mb-4 p-4 bg-emerald-600 text-white rounded-xl text-center pop-in">
-                    <p class="text-[9px] font-black uppercase opacity-80 mb-1">Unlucky Payer:</p>
-                    <h2 id="bill-winner-name" class="text-2xl font-black italic">--</h2>
-                </div>
-                <button onclick="spinForBill()" class="w-full bg-emerald-600 text-white font-black py-3 rounded-xl text-sm shadow-lg">💸 WHO PAYS THE TAB?</button>
             </div>
         </div>
 
-        <div class="glass-card p-5 rounded-2xl shadow-xl">
-            <h3 class="text-xs font-black text-gray-400 uppercase mb-4 tracking-widest">Nearby Contenders</h3>
-            <div id="restaurant-list" class="flex flex-col gap-3 max-h-80 overflow-y-auto">
-                <p class="text-center text-gray-400 text-xs italic py-4">Search to load list...</p>
+        <div id="view-history" class="tab-view hidden flex flex-col gap-4">
+            <div class="glass-card p-5 rounded-2xl min-h-[400px]">
+                <h3 class="text-xs font-black text-pink-600 uppercase tracking-widest mb-4 border-b pb-2">Win History</h3>
+                <div id="history-list" class="flex flex-col gap-3"></div>
             </div>
         </div>
     </main>
 
     <script>
-        // State
-        let availableRestaurants = [];
-        let userLat, userLon;
-        let favorites = JSON.parse(localStorage.getItem('lunchFavs') || '[]');
+        let restaurants = [];
+        let favs = JSON.parse(localStorage.getItem('jpot_favs') || '[]');
+        let history = JSON.parse(localStorage.getItem('jpot_hist') || '[]');
+        let lat, lon, currentWinner, map, userMarker, restaurantMarkers = [];
 
-        // --- 1. UTILS ---
-        function calculateMiles(lat1, lon1, lat2, lon2) {
-            const R = 3958.8; const dLat = (lat2-lat1)*Math.PI/180; const dLon = (lon2-lon1)*Math.PI/180;
-            const a = Math.sin(dLat/2)*Math.sin(dLat/2) + Math.cos(lat1*Math.PI/180)*Math.cos(lat2*Math.PI/180)*Math.sin(dLon/2)*Math.sin(dLon/2);
-            return (R * (2 * Math.atan2(Math.sqrt(a), Math.sqrt(1-a)))).toFixed(1);
+        function switchTab(id) {
+            document.querySelectorAll('.tab-view').forEach(v => v.classList.add('hidden'));
+            document.querySelectorAll('.tab-btn').forEach(b => b.classList.remove('active'));
+            document.getElementById('view-' + id).classList.remove('hidden');
+            document.getElementById('tab-' + id).classList.add('active');
+            if(id === 'map') {
+                setTimeout(() => { if(map) map.invalidateSize(); else initMap(); }, 100);
+            }
+            if(id === 'history') renderHistory();
         }
 
-        function isOpen(osmHours) {
-            if (!osmHours || osmHours === "Not listed") return true;
-            try {
-                const now = new Date();
-                const day = ['Su','Mo','Tu','We','Th','Fr','Sa'][now.getDay()];
-                const time = now.getHours() * 100 + now.getMinutes();
-                const rules = osmHours.split(';');
-                for (let r of rules) {
-                    if (r.includes(day) || r.includes('Mo-Su')) {
-                        const m = r.match(/(\d{2}):(\d{2})-(\d{2}):(\d{2})/);
-                        if (m) {
-                            const start = parseInt(m[1])*100 + parseInt(m[2]);
-                            const end = parseInt(m[3])*100 + parseInt(m[4]);
-                            if (time >= start && time <= end) return true;
-                        }
-                    }
-                }
-                return false;
-            } catch(e) { return true; }
+        // --- MAP ENGINE ---
+        function initMap() {
+            if(!lat || !lon) return;
+            map = L.map('map-container').setView([lat, lon], 14);
+            L.tileLayer('https://{s}.tile.openstreetmap.org/{z}/{x}/{y}.png').addTo(map);
+            updateMapMarkers();
         }
 
-        // --- 2. SEARCH & DATA ---
-        async function runSearch() {
-            document.getElementById('loader').classList.remove('hidden');
+        function updateMapMarkers() {
+            if(!map) return;
+            restaurantMarkers.forEach(m => map.removeLayer(m));
+            if(userMarker) map.removeLayer(userMarker);
+            restaurantMarkers = [];
+
+            // Add Blue Dot (User)
+            const blueDotIcon = L.divIcon({ className: 'user-location-dot', iconSize: [14, 14] });
+            userMarker = L.marker([lat, lon], { icon: blueDotIcon }).addTo(map).bindPopup("<b>You are here</b>");
+
+            // Add Restaurants
+            restaurants.forEach(p => {
+                const m = L.marker([p.lat, p.lon]).addTo(map).bindPopup(`<b>${p.name}</b><br>${p.type}`);
+                restaurantMarkers.push(m);
+            });
+        }
+
+        // --- FETCHING ---
+        document.getElementById('search-btn').onclick = async () => {
+            const loader = document.getElementById('loader');
+            loader.classList.remove('hidden');
             const zip = document.getElementById('zip-input').value.trim();
             try {
                 if (zip) {
                     const r = await fetch(`https://nominatim.openstreetmap.org/search?postalcode=${zip}&country=US&format=json`);
                     const d = await r.json();
-                    userLat = d[0].lat; userLon = d[0].lon;
+                    lat = parseFloat(d[0].lat); lon = parseFloat(d[0].lon);
                 } else {
                     const p = await new Promise((res, rej) => navigator.geolocation.getCurrentPosition(res, rej));
-                    userLat = p.coords.latitude; userLon = p.coords.longitude;
+                    lat = p.coords.latitude; lon = p.coords.longitude;
                 }
-                fetchPlaces();
-            } catch(e) { alert("Location Error"); document.getElementById('loader').classList.add('hidden'); }
-        }
+                const cuisine = document.getElementById('cuisine-input').value;
+                const q = `[out:json];(node["amenity"~"restaurant|fast_food"]["cuisine"~"${cuisine !== 'food' ? cuisine : ''}"](around:5000,${lat},${lon}););out 30;`;
+                const resp = await fetch(`https://overpass-api.de/api/interpreter?data=${encodeURIComponent(q)}`);
+                const data = await resp.json();
+                
+                restaurants = data.elements.filter(e => e.tags.name).map(e => ({
+                    id: e.id.toString(),
+                    name: e.tags.name,
+                    cuisine: (e.tags.cuisine || 'food').split(';')[0],
+                    type: (e.tags.cuisine || 'Food').split(';')[0].toUpperCase(),
+                    rating: e.tags.rating || (Math.random() * 1.2 + 3.8).toFixed(1),
+                    lat: e.lat, lon: e.lon,
+                    dist: calcDist(lat, lon, e.lat, e.lon)
+                }));
 
-        async function fetchPlaces() {
-            const cuisine = document.getElementById('cuisine-input').value;
-            let filter = cuisine !== 'all' ? `["cuisine"~"${cuisine}"]` : '';
-            const query = `[out:json];(node["amenity"~"restaurant|fast_food"]${filter}(around:5000,${userLat},${userLon}););out 40;`;
-            
-            const resp = await fetch(`https://overpass-api.de/api/interpreter?data=${encodeURIComponent(query)}`);
-            const data = await resp.json();
-            const budgetLimit = parseInt(document.getElementById('budget-input').value);
+                renderList();
+                if(map) updateMapMarkers();
+                document.getElementById('pick-btn').disabled = false;
+                loader.classList.add('hidden');
+                document.getElementById('location-status').innerText = `Found ${restaurants.length} Places`;
+            } catch(e) { alert("GPS Denied"); loader.classList.add('hidden'); }
+        };
 
-            availableRestaurants = data.elements.filter(e => e.tags.name).map(e => ({
-                id: e.id.toString(),
-                name: e.tags.name,
-                type: (e.tags.cuisine || 'Food').toUpperCase(),
-                rating: e.tags.rating || (Math.random() * 1.2 + 3.8).toFixed(1),
-                website: e.tags.website || e.tags['contact:website'] || null,
-                hours: e.tags.opening_hours || "Not listed",
-                price: (e.tags.amenity === 'fast_food') ? 1 : (e.tags.cuisine === 'steakhouse' ? 3 : 2),
-                distance: calculateMiles(userLat, userLon, e.lat, e.lon),
-                lat: e.lat, lon: e.lon
-            }))
-            .filter(p => p.price <= budgetLimit)
-            .filter(p => !document.getElementById('open-now-check').checked || isOpen(p.hours));
-
-            renderContenders();
-            document.getElementById('pick-btn').disabled = availableRestaurants.length === 0;
-            document.getElementById('loader').classList.add('hidden');
-            document.getElementById('location-status').innerText = `Found ${availableRestaurants.length} Places`;
-        }
-
-        // --- 3. RENDERING ---
-        function renderContenders() {
+        function renderList() {
             const list = document.getElementById('restaurant-list');
-            list.innerHTML = availableRestaurants.map(p => `
-                <div class="hours-row p-3 bg-white/70 rounded-xl border border-white">
-                    <div class="flex justify-between items-start">
-                        <div class="w-3/4">
-                            <h4 class="font-bold text-gray-800 text-xs truncate">${p.name}</h4>
-                            <p class="text-[9px] text-gray-400 font-black uppercase">${p.type} • ⭐ ${p.rating} • ${'$'.repeat(p.price)}</p>
-                        </div>
-                        <button onclick="toggleFav('${p.id}')" class="star-btn text-lg ${favorites.includes(p.id) ? 'active' : 'text-gray-300'}">
-                            ${favorites.includes(p.id) ? '★' : '☆'}
-                        </button>
+            list.innerHTML = restaurants.map(p => `
+                <div class="p-3 bg-white/60 rounded-xl border border-white flex justify-between items-center">
+                    <div>
+                        <h4 class="font-bold text-gray-800 text-[10px] truncate">${p.name}</h4>
+                        <p class="text-[8px] text-gray-400 font-black uppercase">${p.type} • ⭐ ${p.rating}</p>
                     </div>
-                    <div class="mt-2 border-t border-gray-100 pt-1">
-                        <button onclick="this.parentElement.parentElement.classList.toggle('active')" class="flex items-center justify-between w-full text-[9px] font-black text-indigo-500 uppercase">
-                            <span>🕒 ${isOpen(p.hours) ? 'Open' : 'Closed'} - View Hours</span>
-                            <span>▼</span>
-                        </button>
-                        <div class="hours-content"><p class="text-[9px] text-gray-500 mt-1 italic">${p.hours.replace(/;/g, '<br>')}</p></div>
-                    </div>
-                </div>
-            `).join('');
+                    <button onclick="toggleFav('${p.id}')" class="star-btn ${favs.includes(p.id) ? 'text-yellow-500' : 'text-gray-300'}">★</button>
+                </div>`).join('');
         }
 
-        // --- 4. GAME LOGIC ---
-        function toggleFav(id) {
-            const i = favorites.indexOf(id);
-            if (i > -1) favorites.splice(i, 1); else favorites.push(id);
-            localStorage.setItem('lunchFavs', JSON.stringify(favorites));
-            renderContenders();
-        }
-
-        document.getElementById('pick-btn').addEventListener('click', () => {
+        // --- JACKPOT ---
+        document.getElementById('pick-btn').onclick = () => {
             const pool = [];
-            availableRestaurants.forEach(p => {
-                pool.push(p); if (favorites.includes(p.id)) pool.push(p); // Double Weight
-            });
-            const winner = pool[Math.floor(Math.random() * pool.length)];
+            restaurants.forEach(p => { pool.push(p); if(favs.includes(p.id)) pool.push(p); });
+            currentWinner = pool[Math.floor(Math.random() * pool.length)];
+            
+            const area = document.getElementById('roulette-area');
             const belt = document.getElementById('roulette-belt');
-            belt.innerHTML = '';
-            document.getElementById('roulette-area').classList.remove('hidden');
+            area.classList.remove('hidden');
             document.getElementById('final-result-card').classList.add('hidden');
-
+            
             let items = "";
-            for(let i=0; i<30; i++) items += `<div class="roulette-item">${pool[i % pool.length].name}</div>`;
-            items += `<div class="roulette-item text-pink-600 font-black">${winner.name}</div>`;
+            for(let i=0; i<30; i++) items += `<div class="roulette-item text-xs">${pool[i % pool.length].name}</div>`;
+            items += `<div class="roulette-item text-pink-600 font-black">${currentWinner.name}</div>`;
             belt.innerHTML = items;
-
+            
             document.documentElement.style.setProperty('--scroll-distance', `-${30 * 80}px`);
-            setTimeout(() => {
-                belt.classList.add('spinning');
-                belt.addEventListener('animationend', () => {
-                    document.getElementById('roulette-area').classList.add('hidden');
-                    belt.classList.remove('spinning');
-                    document.getElementById('winner-name').innerText = winner.name;
-                    document.getElementById('winner-rating').innerText = "⭐".repeat(Math.floor(winner.rating)) + ` (${winner.rating})`;
-                    document.getElementById('winner-details').innerText = `${winner.type} • ${winner.distance} MILES`;
-                    document.getElementById('maps-link').href = `https://www.google.com/maps?q=${winner.lat},${winner.lon}`;
-                    const web = document.getElementById('website-link');
-                    if (winner.website) { web.href = winner.website; web.classList.remove('hidden'); } else { web.classList.add('hidden'); }
-                    document.getElementById('final-result-card').classList.remove('hidden');
-                }, {once:true});
-            }, 50);
-        });
+            belt.classList.add('spinning');
+            
+            belt.addEventListener('animationend', () => {
+                area.classList.add('hidden');
+                belt.classList.remove('spinning');
+                document.getElementById('winner-photo').src = `https://loremflickr.com/400/250/${currentWinner.cuisine},food/all`;
+                document.getElementById('winner-name').innerText = currentWinner.name;
+                document.getElementById('winner-rating').innerText = "⭐".repeat(Math.floor(currentWinner.rating));
+                document.getElementById('winner-details').innerText = `${currentWinner.type} • ${currentWinner.dist} MILES`;
+                document.getElementById('maps-link').href = `http://googleusercontent.com/maps.google.com/6{currentWinner.lat},${currentWinner.lon}`;
+                document.getElementById('final-result-card').classList.remove('hidden');
+                saveToHist(currentWinner);
+            }, {once: true});
+        };
 
-        // --- 5. BILL MANAGEMENT LOGIC ---
-        const billTotal = document.getElementById('bill-total');
-        const tipPct = document.getElementById('tip-percent');
-        const peopleCount = document.getElementById('people-count');
-        const splitOut = document.getElementById('split-result');
-
+        // --- BILL ---
         function updateSplit() {
-            const total = parseFloat(billTotal.value) || 0;
-            const tip = parseFloat(tipPct.value);
-            const people = parseInt(peopleCount.value) || 0;
-            if (total > 0 && people > 0) {
-                const grand = total * (1 + tip);
-                splitOut.innerText = `Total: $${grand.toFixed(2)} | $${(grand/people).toFixed(2)} Each`;
-            } else { splitOut.innerText = "Enter bill & # people"; }
+            const tot = parseFloat(document.getElementById('bill-total').value) || 0;
+            const tip = parseFloat(document.getElementById('tip-percent').value);
+            const num = parseInt(document.getElementById('people-count').value) || 0;
+            const out = document.getElementById('split-result');
+            if(tot > 0 && num > 0) out.innerText = `TOTAL: $${(tot * (1+tip)).toFixed(2)} | $${((tot * (1+tip))/num).toFixed(2)} EACH`;
         }
-        [billTotal, tipPct, peopleCount].forEach(e => e.addEventListener('input', updateSplit));
+        ['bill-total', 'tip-percent', 'people-count'].forEach(id => document.getElementById(id).addEventListener('input', updateSplit));
 
-        function addPayerField() {
-            const box = document.getElementById('names-list');
-            if (box.children.length < 10) {
-                const i = document.createElement('input');
-                i.className = "payer-input p-2 border border-gray-200 rounded-lg text-[11px] font-bold bg-white/50";
-                i.placeholder = `Name ${box.children.length + 1}`;
-                box.appendChild(i);
-            }
-        }
-        function resetPayers() { 
-            document.getElementById('names-list').innerHTML = `
-                <input type="text" class="payer-input p-2 border border-gray-200 rounded-lg text-[11px] font-bold bg-white/50" placeholder="Name 1">
-                <input type="text" class="payer-input p-2 border border-gray-200 rounded-lg text-[11px] font-bold bg-white/50" placeholder="Name 2">
-            `;
-            document.getElementById('bill-winner-box').classList.add('hidden');
-        }
-
-        function spinForBill() {
+        function spinForPayer() {
             const names = Array.from(document.querySelectorAll('.payer-input')).map(i => i.value.trim()).filter(n => n !== "");
-            if (names.length < 2) return alert("Enter 2+ names!");
-            const display = document.getElementById('bill-winner-box');
-            const target = document.getElementById('bill-winner-name');
-            display.classList.remove('hidden');
+            if(names.length < 2) return alert("Need 2 names");
+            const target = document.getElementById('payer-result-name');
+            document.getElementById('payer-result-box').classList.remove('hidden');
             let j = 0;
-            const timer = setInterval(() => {
+            const t = setInterval(() => {
                 target.innerText = names[Math.floor(Math.random() * names.length)];
-                if (j++ > 20) { clearInterval(timer); target.innerText = names[Math.floor(Math.random() * names.length)]; }
+                if(j++ > 15) { clearInterval(t); }
             }, 70);
         }
 
-        document.getElementById('search-btn').addEventListener('click', runSearch);
+        // --- UTILS ---
+        function saveToHist(p) {
+            history.unshift({ name: p.name, time: new Date().toLocaleTimeString() });
+            if(history.length > 10) history.pop();
+            localStorage.setItem('jpot_hist', JSON.stringify(history));
+        }
+        function renderHistory() {
+            document.getElementById('history-list').innerHTML = history.map(h => `<div class="p-3 bg-white/50 border rounded-xl flex justify-between items-center text-[10px] font-bold"><span>${h.name}</span><span class="text-gray-400">${h.time}</span></div>`).join('');
+        }
+        function toggleFav(id) { 
+            const idx = favs.indexOf(id);
+            if(idx > -1) favs.splice(idx,1); else favs.push(id);
+            localStorage.setItem('jpot_favs', JSON.stringify(favs));
+            renderList();
+        }
+        function calcDist(la1, lo1, la2, lo2) {
+            const R = 3958.8; const dLa = (la2-la1)*Math.PI/180; const dLo = (lo2-lo1)*Math.PI/180;
+            const a = Math.sin(dLa/2)*Math.sin(dLa/2) + Math.cos(la1*Math.PI/180)*Math.cos(la2*Math.PI/180)*Math.sin(dLo/2)*Math.sin(dLo/2);
+            return (R * (2 * Math.atan2(Math.sqrt(a), Math.sqrt(1-a)))).toFixed(1);
+        }
     </script>
 </body>
 </html>
