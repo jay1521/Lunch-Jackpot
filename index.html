@@ -3,7 +3,7 @@
 <head>
     <meta charset="UTF-8">
     <meta name="viewport" content="width=device-width, initial-scale=1.0, maximum-scale=1.0, user-scalable=no">
-    <title>Bite Roulette</title>
+    <title>Dine Roulette</title>
     <script src="https://cdn.tailwindcss.com"></script>
     <link rel="stylesheet" href="https://unpkg.com/leaflet@1.9.4/dist/leaflet.css" />
     <script src="https://unpkg.com/leaflet@1.9.4/dist/leaflet.js"></script>
@@ -27,6 +27,7 @@
             background-size: 20px 20px;
             font-family: 'Nunito', sans-serif;
             color: var(--border-color);
+            overflow-x: hidden; /* Prevent horizontal scroll during transitions */
         }
 
         h1, h2, h3, .tab-btn { font-family: 'Titan One', cursive; letter-spacing: 1px; }
@@ -120,8 +121,31 @@
         
         .hours-content { max-height: 0; overflow: hidden; transition: max-height 0.3s ease-out; }
         .hours-row.active .hours-content { max-height: 120px; overflow-y: auto; }
-        .cartoon-title { color: var(--accent-orange); -webkit-text-stroke: 1.5px black; text-shadow: 3px 3px 0px #000; }
+        .cartoon-title { color: var(--accent-orange); -webkit-text-stroke: 1.5px black; text-shadow: 3px 3px 0px #000; transition: all 0.3s ease; }
         
+        /* TRANSITION OVERLAY */
+        #transition-overlay {
+            position: fixed;
+            inset: 0;
+            background: rgba(255,255,255,0.9);
+            z-index: 9999;
+            display: flex;
+            align-items: center;
+            justify-content: center;
+            pointer-events: none;
+            opacity: 0;
+            transform: scale(0.8);
+            transition: opacity 0.3s ease, transform 0.3s cubic-bezier(0.175, 0.885, 0.32, 1.275);
+        }
+        #transition-overlay.active {
+            opacity: 1;
+            transform: scale(1);
+        }
+        #transition-icon {
+            font-size: 8rem;
+            filter: drop-shadow(4px 4px 0px rgba(0,0,0,1));
+        }
+
         /* Animations */
         .pop-in { animation: popIn 0.5s cubic-bezier(0.175, 0.885, 0.32, 1.275); }
         @keyframes popIn { 0% { transform: scale(0); opacity: 0; } 100% { transform: scale(1); opacity: 1; } }
@@ -129,8 +153,12 @@
 </head>
 <body class="min-h-screen pb-44">
 
+    <div id="transition-overlay">
+        <div id="transition-icon">🍽️</div>
+    </div>
+
     <header class="w-full max-w-md mx-auto p-6 text-center">
-        <h1 class="text-4xl cartoon-title mb-2">BITE<br>ROULETTE</h1>
+        <h1 id="main-title" class="text-4xl cartoon-title mb-2">DINE<br>ROULETTE</h1>
         <div class="inline-block bg-white border-2 border-black rounded-full px-4 py-1 shadow-[2px_2px_0px_0px_rgba(0,0,0,1)]">
             <div class="flex items-center gap-2">
                 <div id="loader" class="loader hidden w-3 h-3 border-2 border-black border-t-transparent rounded-full animate-spin"></div>
@@ -141,7 +169,7 @@
 
     <nav class="fixed bottom-4 left-1/2 -translate-x-1/2 w-[98%] max-w-md bg-white border-4 border-black rounded-2xl p-2 z-[1000] shadow-[6px_6px_0px_0px_rgba(0,0,0,1)]">
         <div class="flex flex-wrap justify-center gap-1">
-            <button onclick="switchTab('jackpot')" id="tab-jackpot" class="tab-btn active flex-grow w-[30%] py-2 text-[8px] font-black uppercase">🍔 Food</button>
+            <button onclick="switchTab('jackpot')" id="tab-jackpot" class="tab-btn active flex-grow w-[30%] py-2 text-[8px] font-black uppercase">🍔 Dine</button>
             <button onclick="switchTab('bar')" id="tab-bar" class="tab-btn flex-grow w-[30%] py-2 text-[8px] font-black uppercase">🍸 21+</button>
             <button onclick="switchTab('coffee')" id="tab-coffee" class="tab-btn flex-grow w-[30%] py-2 text-[8px] font-black uppercase">☕ Coffee</button>
             
@@ -432,14 +460,45 @@
             'https://overpass.kumi.systems/api/interpreter'
         ];
 
+        // --- TAB SWITCHING & TRANSITION LOGIC ---
         function switchTab(id) {
-            document.querySelectorAll('.tab-view').forEach(v => v.classList.add('hidden'));
-            document.querySelectorAll('.tab-btn').forEach(b => b.classList.remove('active'));
-            document.getElementById('view-' + id).classList.remove('hidden');
-            document.getElementById('tab-' + id).classList.add('active');
+            // 1. Determine Title and Icon
+            let title = "DINE ROULETTE";
+            let icon = "🍽️";
+
+            if (id === 'jackpot') { title = "DINE<br>ROULETTE"; icon = "🍽️"; }
+            else if (id === 'bar') { title = "THIRSTY<br>ROULETTE"; icon = "🍸"; }
+            else if (id === 'coffee') { title = "CAFFEINE<br>ROULETTE"; icon = "☕"; }
+            else if (id === 'bill') { title = "TAB<br>ROULETTE"; icon = "💸"; }
+            else if (id === 'history') { title = "HISTORY<br>ROULETTE"; icon = "📜"; }
+            else if (id === 'map') { title = "LOCAL<br>MAP"; icon = "🗺️"; }
+
+            // 2. Play Transition
+            const overlay = document.getElementById('transition-overlay');
+            const overlayIcon = document.getElementById('transition-icon');
             
-            if(id === 'map') setTimeout(() => { if(map) map.invalidateSize(); else initMap(); }, 100);
-            if(id === 'history') renderHistory();
+            overlayIcon.innerText = icon;
+            overlay.classList.add('active');
+
+            // 3. Swap Content after slight delay (halfway through transition)
+            setTimeout(() => {
+                document.getElementById('main-title').innerHTML = title;
+                
+                document.querySelectorAll('.tab-view').forEach(v => v.classList.add('hidden'));
+                document.querySelectorAll('.tab-btn').forEach(b => b.classList.remove('active'));
+                
+                document.getElementById('view-' + id).classList.remove('hidden');
+                document.getElementById('tab-' + id).classList.add('active');
+                
+                if(id === 'map') setTimeout(() => { if(map) map.invalidateSize(); else initMap(); }, 100);
+                if(id === 'history') renderHistory();
+
+                // 4. Hide Overlay
+                setTimeout(() => {
+                    overlay.classList.remove('active');
+                }, 300);
+
+            }, 300);
         }
 
         function initMap() {
@@ -517,7 +576,6 @@
             // PRIORITY: 1. Zip Code, 2. Existing GPS Lat/Lon, 3. Error
             if (zip) {
                 try {
-                    // Added User-Agent to satisfy Nominatim Policy
                     const r = await fetch(`https://nominatim.openstreetmap.org/search?postalcode=${zip}&country=US&format=json&limit=1`, {
                         headers: { "User-Agent": "BiteRoulette/1.0" }
                     });
