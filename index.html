@@ -22,10 +22,11 @@
         @keyframes pop { 0% { transform: scale(0.8); opacity: 0; } 100% { transform: scale(1); opacity: 1; } }
         .loader { border: 3px solid rgba(255,255,255,0.3); border-top: 3px solid white; border-radius: 50%; width: 18px; height: 18px; animation: spin 1s linear infinite; }
         @keyframes spin { 0% { transform: rotate(0deg); } 100% { transform: rotate(360deg); } }
-        .star-btn.active { color: #f59e0b; filter: drop-shadow(0 0 5px rgba(245, 158, 11, 0.5)); }
+        .star-btn.active { color: #f59e0b; }
+        input[type="text"] { -webkit-appearance: none; border-radius: 8px; }
     </style>
 </head>
-<body class="font-sans min-h-screen p-4 flex flex-col items-center">
+<body class="font-sans min-h-screen p-4 flex flex-col items-center pb-20">
 
     <header class="w-full max-w-md my-4 text-center text-white">
         <h1 class="text-4xl font-black mb-1 drop-shadow-lg">🎰 Lunch Jackpot</h1>
@@ -35,186 +36,198 @@
         </div>
     </header>
 
-    <main class="w-full max-w-md flex flex-col gap-4">
+    <main class="w-full max-w-md flex flex-col gap-6">
         
         <div class="glass-card p-4 rounded-2xl shadow-lg border border-white/50">
+            <h3 class="text-[10px] font-black text-purple-600 uppercase mb-3 tracking-widest">Step 1: Find Food</h3>
             <div class="grid grid-cols-2 gap-3 mb-3">
                 <div>
                     <label class="block text-[10px] font-black text-gray-400 uppercase mb-1">Zip Code</label>
-                    <input type="text" id="zip-input" placeholder="Current GPS" class="w-full p-2 bg-white border border-gray-200 rounded-lg text-sm font-bold outline-none">
+                    <input type="text" id="zip-input" placeholder="GPS" class="w-full p-2 bg-white border border-gray-200 rounded-lg text-sm font-bold outline-none">
                 </div>
                 <div>
-                    <label class="block text-[10px] font-black text-gray-400 uppercase mb-1">Max Budget</label>
+                    <label class="block text-[10px] font-black text-gray-400 uppercase mb-1">Budget</label>
                     <select id="budget-input" class="w-full p-2 bg-white border border-gray-200 rounded-lg text-sm font-bold outline-none">
-                        <option value="4">Any Price</option>
-                        <option value="1">$ - Cheap</option>
-                        <option value="2">$$ - Mid</option>
-                        <option value="3">$$$ - High</option>
+                        <option value="4">Any</option>
+                        <option value="1">$</option>
+                        <option value="2">$$</option>
+                        <option value="3">$$$</option>
                     </select>
                 </div>
             </div>
-            <div class="grid grid-cols-2 gap-3 mb-3">
-                <div>
-                    <label class="block text-[10px] font-black text-gray-400 uppercase mb-1">Cuisine</label>
-                    <select id="cuisine-input" class="w-full p-2 bg-white border border-gray-200 rounded-lg text-[11px] font-bold outline-none">
-                        <option value="all">🎡 Everything</option>
-                        <option value="pizza">🍕 Pizza</option>
-                        <option value="burger">🍔 Burgers</option>
-                        <option value="mexican">🌮 Mexican</option>
-                        <option value="asian">🍣 Asian</option>
-                    </select>
-                </div>
-                <div class="flex flex-col justify-end pb-1">
-                    <label class="flex items-center gap-2 cursor-pointer">
-                        <input type="checkbox" id="open-now-check" class="w-4 h-4 accent-pink-600">
-                        <span class="text-[10px] font-black text-gray-600 uppercase">Open Now</span>
-                    </label>
+            <button id="search-btn" class="w-full bg-slate-800 text-white text-xs font-black py-2.5 rounded-lg shadow-md">REFRESH PLACES</button>
+
+            <div id="roulette-area" class="mt-4 hidden"><div class="roulette-window"><div id="roulette-belt" class="roulette-belt"></div></div></div>
+            <div id="final-result-card" class="hidden mt-4 p-4 bg-white rounded-xl border-4 border-yellow-400 shadow-xl pop-in">
+                <h2 id="winner-name" class="text-xl font-black text-gray-900 leading-tight">--</h2>
+                <div id="winner-rating" class="text-orange-500 font-bold text-xs my-1"></div>
+                <p id="winner-details" class="text-gray-500 text-[10px] font-bold mb-3 uppercase">--</p>
+                <div class="flex flex-col gap-2">
+                    <a id="maps-link" href="#" target="_blank" class="block bg-indigo-600 text-white text-[10px] font-black py-2 text-center rounded-full uppercase">🗺️ Directions</a>
+                    <a id="website-link" href="#" target="_blank" class="block text-indigo-600 text-[10px] font-black text-center underline uppercase">Visit Website</a>
                 </div>
             </div>
-            <button id="search-btn" class="w-full bg-slate-800 text-white text-xs font-black py-2.5 rounded-lg shadow-md">REFRESH LIST</button>
+            <button id="pick-btn" disabled class="w-full mt-4 bg-gradient-to-r from-pink-600 to-purple-700 text-white font-black py-4 rounded-xl text-lg shadow-lg">🎲 SPIN FOR FOOD</button>
         </div>
 
-        <div class="glass-card p-6 rounded-2xl shadow-2xl text-center relative">
-            <div id="roulette-area" class="mb-6 hidden">
-                <div class="roulette-window"><div id="roulette-belt" class="roulette-belt"></div></div>
+        <div class="glass-card p-5 rounded-2xl shadow-xl border border-white/50">
+            <h3 class="text-[10px] font-black text-emerald-600 uppercase mb-3 tracking-widest">Step 2: Who Pays?</h3>
+            <div id="names-container" class="grid grid-cols-2 gap-2 mb-4">
+                <input type="text" placeholder="Name 1" class="pay-name p-2 border border-gray-200 rounded-lg text-xs font-bold bg-white/50">
+                <input type="text" placeholder="Name 2" class="pay-name p-2 border border-gray-200 rounded-lg text-xs font-bold bg-white/50">
+            </div>
+            <div class="flex gap-2 mb-4">
+                <button onclick="addNameField()" class="flex-1 bg-gray-200 text-gray-700 text-[10px] font-black py-2 rounded-lg">+ ADD PERSON</button>
+                <button onclick="resetNames()" class="flex-1 bg-gray-200 text-gray-700 text-[10px] font-black py-2 rounded-lg">RESET</button>
+            </div>
+            
+            <div id="payer-display" class="hidden mb-4 p-6 bg-emerald-100 border-2 border-emerald-500 rounded-xl text-center pop-in">
+                <p class="text-[10px] font-black text-emerald-700 uppercase">The Unlucky Payer Is:</p>
+                <h2 id="payer-name" class="text-3xl font-black text-emerald-900">--</h2>
             </div>
 
-            <div id="final-result-card" class="hidden mb-6 p-5 bg-gradient-to-br from-yellow-50 to-white rounded-xl border-4 border-yellow-400 shadow-xl">
-                <h2 id="winner-name" class="text-2xl font-black text-gray-900 leading-tight mb-1">--</h2>
-                <div id="winner-rating" class="text-orange-500 font-bold text-sm mb-2"></div>
-                <p id="winner-details" class="text-gray-600 text-xs font-bold mb-4">--</p>
-                <div class="flex flex-col gap-2">
-                    <a id="maps-link" href="#" target="_blank" class="block bg-indigo-600 text-white text-xs font-black py-3 px-6 rounded-full shadow-lg">🗺️ GET DIRECTIONS</a>
-                    <button id="share-btn" class="block bg-emerald-500 text-white text-xs font-black py-3 px-6 rounded-full shadow-lg">📤 TEXT TO FRIENDS</button>
-                </div>
-            </div>
-
-            <button id="pick-btn" disabled class="w-full bg-gradient-to-r from-pink-600 to-purple-700 text-white font-black py-4 px-6 rounded-xl text-xl shadow-lg transition-all active:scale-95 disabled:opacity-50">
-                🎲 SPIN THE WHEEL
-            </button>
+            <button onclick="spinForPayer()" class="w-full bg-emerald-600 text-white font-black py-4 rounded-xl text-lg shadow-lg active:scale-95 transition-all">💸 SPIN FOR BILL</button>
         </div>
 
         <div class="glass-card p-5 rounded-2xl shadow-xl">
-            <h3 class="text-sm font-black text-gray-400 uppercase mb-4 tracking-widest">Nearby Contenders</h3>
-            <div id="restaurant-list" class="flex flex-col gap-3 max-h-80 overflow-y-auto"></div>
+            <h3 class="text-[10px] font-black text-gray-400 uppercase mb-4 tracking-widest">Nearby Options</h3>
+            <div id="restaurant-list" class="flex flex-col gap-2 max-h-60 overflow-y-auto"></div>
         </div>
     </main>
 
     <script>
         const listContainer = document.getElementById('restaurant-list');
-        const locationStatus = document.getElementById('location-status');
         const loader = document.getElementById('loader');
         const pickBtn = document.getElementById('pick-btn');
         const searchBtn = document.getElementById('search-btn');
-        const shareBtn = document.getElementById('share-btn');
-        const zipInput = document.getElementById('zip-input');
-        const budgetInput = document.getElementById('budget-input');
-        const cuisineInput = document.getElementById('cuisine-input');
-        const openNowCheck = document.getElementById('open-now-check');
         const rouletteArea = document.getElementById('roulette-area');
         const rouletteBelt = document.getElementById('roulette-belt');
         const finalResultCard = document.getElementById('final-result-card');
         
         let availableRestaurants = [];
-        let userLat = 0, userLon = 0;
-        let favorites = JSON.parse(localStorage.getItem('lunchJackpotFavs') || '[]');
-        let currentWinner = null;
+        let userLat, userLon;
 
-        function toggleFavorite(id) {
-            const index = favorites.indexOf(id);
-            if (index > -1) favorites.splice(index, 1);
-            else favorites.push(id);
-            localStorage.setItem('lunchJackpotFavs', JSON.stringify(favorites));
-            renderList(availableRestaurants);
-        }
-
+        // --- RESTAURANT LOGIC ---
         async function startSearch() {
             loader.classList.remove('hidden');
-            locationStatus.textContent = "Locating...";
-            finalResultCard.classList.add('hidden');
             try {
-                if (zipInput.value.trim() !== "") {
-                    const resp = await fetch(`https://nominatim.openstreetmap.org/search?postalcode=${zipInput.value.trim()}&country=US&format=json`);
+                const zip = document.getElementById('zip-input').value.trim();
+                if (zip) {
+                    const resp = await fetch(`https://nominatim.openstreetmap.org/search?postalcode=${zip}&country=US&format=json`);
                     const data = await resp.json();
-                    userLat = parseFloat(data[0].lat); userLon = parseFloat(data[0].lon);
+                    userLat = data[0].lat; userLon = data[0].lon;
                 } else {
                     const pos = await new Promise((res, rej) => navigator.geolocation.getCurrentPosition(res, rej));
                     userLat = pos.coords.latitude; userLon = pos.coords.longitude;
                 }
-                fetchRestaurants();
-            } catch (e) { alert("GPS Denied"); loader.classList.add('hidden'); }
+                fetchPlaces();
+            } catch (e) { alert("Need Location"); loader.classList.add('hidden'); }
         }
 
-        async function fetchRestaurants() {
-            const query = `[out:json];(node["amenity"~"restaurant|fast_food"](around:5000,${userLat},${userLon}););out 50;`;
-            try {
-                const response = await fetch(`https://overpass-api.de/api/interpreter?data=${encodeURIComponent(query)}`);
-                const data = await response.json();
-                availableRestaurants = data.elements
-                    .filter(place => place.tags && place.tags.name)
-                    .map(place => ({
-                        id: place.id.toString(),
-                        name: place.tags.name,
-                        type: (place.tags.cuisine || 'Food').split(';')[0].toUpperCase(),
-                        priceLevel: (place.tags.amenity === 'fast_food') ? 1 : 2,
-                        distance: calculateMiles(userLat, userLon, place.lat, place.lon),
-                        lat: place.lat, lon: place.lon
-                    }))
-                    .sort((a, b) => a.distance - b.distance);
-                renderList(availableRestaurants);
-                pickBtn.disabled = false;
-                loader.classList.add('hidden');
-            } catch (err) { loader.classList.add('hidden'); }
-        }
+        async function fetchPlaces() {
+            const query = `[out:json];(node["amenity"~"restaurant|fast_food"](around:5000,${userLat},${userLon}););out 30;`;
+            const resp = await fetch(`https://overpass-api.de/api/interpreter?data=${encodeURIComponent(query)}`);
+            const data = await resp.json();
+            
+            availableRestaurants = data.elements.filter(e => e.tags.name).map(e => ({
+                id: e.id,
+                name: e.tags.name,
+                rating: e.tags.rating || (Math.random() * 1.2 + 3.8).toFixed(1),
+                website: e.tags.website || e.tags['contact:website'] || null,
+                type: (e.tags.cuisine || 'Restaurant').toUpperCase(),
+                lat: e.lat, lon: e.lon
+            }));
 
-        function renderList(data) {
-            listContainer.innerHTML = data.map(p => `
-                <div class="flex justify-between items-center p-3 bg-white/70 rounded-xl border border-white">
-                    <div class="w-3/5"><h4 class="font-bold text-gray-800 text-xs truncate">${p.name}</h4><p class="text-[9px] text-gray-400 font-black uppercase">${p.type} • ${p.distance}mi</p></div>
-                    <button onclick="toggleFavorite('${p.id}')" class="star-btn text-xl ${favorites.includes(p.id) ? 'active' : 'text-gray-300'}">${favorites.includes(p.id) ? '★' : '☆'}</button>
-                </div>`).join('');
+            listContainer.innerHTML = availableRestaurants.map(p => `
+                <div class="flex justify-between items-center p-2 bg-white/50 rounded-lg text-xs">
+                    <span class="font-bold truncate w-2/3">${p.name}</span>
+                    <span class="text-orange-500 font-black">⭐${p.rating}</span>
+                </div>
+            `).join('');
+            
+            pickBtn.disabled = false;
+            loader.classList.add('hidden');
+            document.getElementById('location-status').innerText = "Found " + availableRestaurants.length + " Places";
         }
 
         pickBtn.addEventListener('click', () => {
             rouletteArea.classList.remove('hidden');
+            finalResultCard.classList.add('hidden');
             rouletteBelt.innerHTML = '';
-            currentWinner = availableRestaurants[Math.floor(Math.random() * availableRestaurants.length)];
-            let items = [];
-            for(let i=0; i<15; i++) items.push(`<div class="roulette-item truncate px-4">${availableRestaurants[i % availableRestaurants.length].name}</div>`);
-            items.push(`<div class="roulette-item text-pink-600 font-black">${currentWinner.name}</div>`);
-            rouletteBelt.innerHTML = items.join('');
-            document.documentElement.style.setProperty('--scroll-distance', `-${(items.length - 1) * 80}px`);
-            setTimeout(() => {
-                rouletteBelt.classList.add('spinning');
-                rouletteBelt.addEventListener('animationend', () => {
-                    rouletteArea.classList.add('hidden');
-                    document.getElementById('winner-name').innerText = currentWinner.name;
-                    document.getElementById('winner-details').innerText = `${currentWinner.type} • ${currentWinner.distance} MILES`;
-                    document.getElementById('maps-link').href = `https://www.google.com/maps?q=${currentWinner.lat},${currentWinner.lon}`;
-                    finalResultCard.classList.remove('hidden');
-                }, {once: true});
-            }, 50);
+            const winner = availableRestaurants[Math.floor(Math.random() * availableRestaurants.length)];
+            
+            let items = "";
+            for(let i=0; i<30; i++) items += `<div class="roulette-item">${availableRestaurants[i % availableRestaurants.length].name}</div>`;
+            items += `<div class="roulette-item text-pink-600">${winner.name}</div>`;
+            rouletteBelt.innerHTML = items;
+            
+            document.documentElement.style.setProperty('--scroll-distance', `-${(30) * 80}px`);
+            rouletteBelt.classList.add('spinning');
+            
+            rouletteBelt.addEventListener('animationend', () => {
+                rouletteArea.classList.add('hidden');
+                rouletteBelt.classList.remove('spinning');
+                document.getElementById('winner-name').innerText = winner.name;
+                document.getElementById('winner-rating').innerText = "⭐".repeat(Math.floor(winner.rating)) + ` (${winner.rating})`;
+                document.getElementById('winner-details').innerText = winner.type;
+                document.getElementById('maps-link').href = `https://www.google.com/maps?q=${winner.lat},${winner.lon}`;
+                
+                const web = document.getElementById('website-link');
+                if (winner.website) { web.href = winner.website; web.classList.remove('hidden'); }
+                else { web.classList.add('hidden'); }
+                
+                finalResultCard.classList.remove('hidden');
+            }, {once: true});
         });
 
-        // --- THE SOCIAL SHARE FEATURE ---
-        shareBtn.addEventListener('click', async () => {
-            if (!currentWinner) return;
-            const shareData = {
-                title: 'Lunch Jackpot!',
-                text: `I just won the Lunch Jackpot! Let's go to ${currentWinner.name} (${currentWinner.type}).`,
-                url: `https://www.google.com/maps?q=${currentWinner.lat},${currentWinner.lon}`
-            };
-            try {
-                if (navigator.share) { await navigator.share(shareData); } 
-                else { alert("Share not supported on this browser. Copy the URL manually!"); }
-            } catch (err) { console.log(err); }
-        });
-
-        function calculateMiles(lat1, lon1, lat2, lon2) {
-            const R = 3958.8; const dLat = (lat2-lat1)*Math.PI/180; const dLon = (lon2-lon1)*Math.PI/180;
-            const a = Math.sin(dLat/2)*Math.sin(dLat/2) + Math.cos(lat1*Math.PI/180)*Math.cos(lat2*Math.PI/180)*Math.sin(dLon/2)*Math.sin(dLon/2);
-            return (R * (2 * Math.atan2(Math.sqrt(a), Math.sqrt(1-a)))).toFixed(1);
+        // --- CARD ROULETTE (WHO PAYS?) LOGIC ---
+        function addNameField() {
+            const container = document.getElementById('names-container');
+            if (container.children.length >= 10) return;
+            const input = document.createElement('input');
+            input.className = "pay-name p-2 border border-gray-200 rounded-lg text-xs font-bold bg-white/50";
+            input.placeholder = `Name ${container.children.length + 1}`;
+            container.appendChild(input);
         }
+
+        function resetNames() {
+            const container = document.getElementById('names-container');
+            container.innerHTML = `
+                <input type="text" placeholder="Name 1" class="pay-name p-2 border border-gray-200 rounded-lg text-xs font-bold bg-white/50">
+                <input type="text" placeholder="Name 2" class="pay-name p-2 border border-gray-200 rounded-lg text-xs font-bold bg-white/50">
+            `;
+            document.getElementById('payer-display').classList.add('hidden');
+        }
+
+        function spinForPayer() {
+            const inputs = document.querySelectorAll('.pay-name');
+            const names = Array.from(inputs).map(i => i.value.trim()).filter(n => n !== "");
+            
+            if (names.length < 2) {
+                alert("Enter at least 2 names to see who pays!");
+                return;
+            }
+
+            const display = document.getElementById('payer-display');
+            const nameTarget = document.getElementById('payer-name');
+            display.classList.remove('hidden');
+            
+            // Fast "Shuffle" effect
+            let iterations = 0;
+            const interval = setInterval(() => {
+                nameTarget.innerText = names[Math.floor(Math.random() * names.length)];
+                iterations++;
+                if (iterations > 20) {
+                    clearInterval(interval);
+                    const finalWinner = names[Math.floor(Math.random() * names.length)];
+                    nameTarget.innerText = finalWinner;
+                    nameTarget.classList.add('pop-in');
+                    // Alert or Haptic feel
+                    if (navigator.vibrate) navigator.vibrate([100, 50, 100]);
+                }
+            }, 70);
+        }
+
         searchBtn.addEventListener('click', startSearch);
     </script>
 </body>
