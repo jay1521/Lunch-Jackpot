@@ -22,15 +22,14 @@
         @keyframes pop { 0% { transform: scale(0.8); opacity: 0; } 100% { transform: scale(1); opacity: 1; } }
         .loader { border: 3px solid rgba(255,255,255,0.3); border-top: 3px solid white; border-radius: 50%; width: 18px; height: 18px; animation: spin 1s linear infinite; }
         @keyframes spin { 0% { transform: rotate(0deg); } 100% { transform: rotate(360deg); } }
-        .star-btn.active { color: #f59e0b; }
-        input[type="text"] { -webkit-appearance: none; border-radius: 8px; }
+        input { -webkit-appearance: none; border-radius: 8px; }
     </style>
 </head>
 <body class="font-sans min-h-screen p-4 flex flex-col items-center pb-20">
 
     <header class="w-full max-w-md my-4 text-center text-white">
         <h1 class="text-4xl font-black mb-1 drop-shadow-lg">🎰 Lunch Jackpot</h1>
-        <div id="status-container" class="flex justify-center items-center gap-2 bg-white/20 py-1 px-4 rounded-full inline-flex backdrop-blur-sm">
+        <div class="flex justify-center items-center gap-2 bg-white/20 py-1 px-4 rounded-full inline-flex backdrop-blur-sm">
             <div id="loader" class="loader hidden"></div>
             <p class="text-xs font-bold" id="location-status">Ready to hunt!</p>
         </div>
@@ -39,60 +38,65 @@
     <main class="w-full max-w-md flex flex-col gap-6">
         
         <div class="glass-card p-4 rounded-2xl shadow-lg border border-white/50">
-            <h3 class="text-[10px] font-black text-purple-600 uppercase mb-3 tracking-widest">Step 1: Find Food</h3>
+            <h3 class="text-[10px] font-black text-purple-600 uppercase mb-3 tracking-widest">Find Where to Eat</h3>
             <div class="grid grid-cols-2 gap-3 mb-3">
-                <div>
-                    <label class="block text-[10px] font-black text-gray-400 uppercase mb-1">Zip Code</label>
-                    <input type="text" id="zip-input" placeholder="GPS" class="w-full p-2 bg-white border border-gray-200 rounded-lg text-sm font-bold outline-none">
-                </div>
-                <div>
-                    <label class="block text-[10px] font-black text-gray-400 uppercase mb-1">Budget</label>
-                    <select id="budget-input" class="w-full p-2 bg-white border border-gray-200 rounded-lg text-sm font-bold outline-none">
-                        <option value="4">Any</option>
-                        <option value="1">$</option>
-                        <option value="2">$$</option>
-                        <option value="3">$$$</option>
-                    </select>
-                </div>
+                <input type="text" id="zip-input" placeholder="Zip (or leave for GPS)" class="p-2 bg-white border border-gray-200 rounded-lg text-xs font-bold outline-none">
+                <select id="budget-input" class="p-2 bg-white border border-gray-200 rounded-lg text-xs font-bold outline-none">
+                    <option value="4">Any Budget</option>
+                    <option value="1">$ Cheap</option>
+                    <option value="2">$$ Mid</option>
+                    <option value="3">$$$ High</option>
+                </select>
             </div>
-            <button id="search-btn" class="w-full bg-slate-800 text-white text-xs font-black py-2.5 rounded-lg shadow-md">REFRESH PLACES</button>
+            <button id="search-btn" class="w-full bg-slate-800 text-white text-xs font-black py-2.5 rounded-lg shadow-md mb-4">FETCH PLACES</button>
 
-            <div id="roulette-area" class="mt-4 hidden"><div class="roulette-window"><div id="roulette-belt" class="roulette-belt"></div></div></div>
-            <div id="final-result-card" class="hidden mt-4 p-4 bg-white rounded-xl border-4 border-yellow-400 shadow-xl pop-in">
+            <div id="roulette-area" class="hidden"><div class="roulette-window"><div id="roulette-belt" class="roulette-belt"></div></div></div>
+            
+            <div id="final-result-card" class="hidden p-4 bg-white rounded-xl border-4 border-yellow-400 shadow-xl pop-in">
                 <h2 id="winner-name" class="text-xl font-black text-gray-900 leading-tight">--</h2>
                 <div id="winner-rating" class="text-orange-500 font-bold text-xs my-1"></div>
                 <p id="winner-details" class="text-gray-500 text-[10px] font-bold mb-3 uppercase">--</p>
                 <div class="flex flex-col gap-2">
-                    <a id="maps-link" href="#" target="_blank" class="block bg-indigo-600 text-white text-[10px] font-black py-2 text-center rounded-full uppercase">🗺️ Directions</a>
-                    <a id="website-link" href="#" target="_blank" class="block text-indigo-600 text-[10px] font-black text-center underline uppercase">Visit Website</a>
+                    <a id="maps-link" href="#" target="_blank" class="bg-indigo-600 text-white text-[10px] font-black py-2 text-center rounded-full uppercase">🗺️ Directions</a>
+                    <a id="website-link" href="#" target="_blank" class="text-indigo-600 text-[10px] font-black text-center underline uppercase">Visit Website</a>
                 </div>
             </div>
             <button id="pick-btn" disabled class="w-full mt-4 bg-gradient-to-r from-pink-600 to-purple-700 text-white font-black py-4 rounded-xl text-lg shadow-lg">🎲 SPIN FOR FOOD</button>
         </div>
 
         <div class="glass-card p-5 rounded-2xl shadow-xl border border-white/50">
-            <h3 class="text-[10px] font-black text-emerald-600 uppercase mb-3 tracking-widest">Step 2: Who Pays?</h3>
-            <div id="names-container" class="grid grid-cols-2 gap-2 mb-4">
-                <input type="text" placeholder="Name 1" class="pay-name p-2 border border-gray-200 rounded-lg text-xs font-bold bg-white/50">
-                <input type="text" placeholder="Name 2" class="pay-name p-2 border border-gray-200 rounded-lg text-xs font-bold bg-white/50">
+            <h3 class="text-[10px] font-black text-emerald-600 uppercase mb-3 tracking-widest">Bill Management</h3>
+            
+            <div class="bg-emerald-50 p-3 rounded-lg mb-4 border border-emerald-100">
+                <div class="grid grid-cols-2 gap-2 mb-2">
+                    <input type="number" id="bill-total" placeholder="Total Bill $" class="p-2 border border-gray-200 rounded-lg text-xs font-bold bg-white">
+                    <select id="tip-percent" class="p-2 border border-gray-200 rounded-lg text-xs font-bold bg-white">
+                        <option value="0.15">15% Tip</option>
+                        <option value="0.18" selected>18% Tip</option>
+                        <option value="0.20">20% Tip</option>
+                        <option value="0.25">25% Tip</option>
+                    </select>
+                </div>
+                <div id="split-result" class="text-center text-emerald-800 text-[11px] font-black uppercase">Enter bill to see split</div>
+            </div>
+
+            <div id="names-container" class="grid grid-cols-2 gap-2 mb-3">
+                <input type="text" placeholder="Name 1" class="pay-name p-2 border border-gray-200 rounded-lg text-xs font-bold bg-white">
+                <input type="text" placeholder="Name 2" class="pay-name p-2 border border-gray-200 rounded-lg text-xs font-bold bg-white">
             </div>
             <div class="flex gap-2 mb-4">
-                <button onclick="addNameField()" class="flex-1 bg-gray-200 text-gray-700 text-[10px] font-black py-2 rounded-lg">+ ADD PERSON</button>
-                <button onclick="resetNames()" class="flex-1 bg-gray-200 text-gray-700 text-[10px] font-black py-2 rounded-lg">RESET</button>
+                <button onclick="addNameField()" class="flex-1 bg-gray-100 text-[10px] font-black py-2 rounded-lg text-gray-600">+ ADD PERSON</button>
+                <button onclick="resetNames()" class="flex-1 bg-gray-100 text-[10px] font-black py-2 rounded-lg text-gray-600">RESET</button>
             </div>
             
-            <div id="payer-display" class="hidden mb-4 p-6 bg-emerald-100 border-2 border-emerald-500 rounded-xl text-center pop-in">
-                <p class="text-[10px] font-black text-emerald-700 uppercase">The Unlucky Payer Is:</p>
-                <h2 id="payer-name" class="text-3xl font-black text-emerald-900">--</h2>
+            <div id="payer-display" class="hidden mb-4 p-4 bg-emerald-600 text-white rounded-xl text-center pop-in">
+                <p class="text-[9px] font-black uppercase opacity-80">The Tab Winner Is:</p>
+                <h2 id="payer-name" class="text-2xl font-black">--</h2>
             </div>
 
-            <button onclick="spinForPayer()" class="w-full bg-emerald-600 text-white font-black py-4 rounded-xl text-lg shadow-lg active:scale-95 transition-all">💸 SPIN FOR BILL</button>
+            <button onclick="spinForPayer()" class="w-full bg-emerald-600 text-white font-black py-4 rounded-xl text-lg shadow-lg">💸 SPIN FOR BILL</button>
         </div>
 
-        <div class="glass-card p-5 rounded-2xl shadow-xl">
-            <h3 class="text-[10px] font-black text-gray-400 uppercase mb-4 tracking-widest">Nearby Options</h3>
-            <div id="restaurant-list" class="flex flex-col gap-2 max-h-60 overflow-y-auto"></div>
-        </div>
     </main>
 
     <script>
@@ -103,11 +107,49 @@
         const rouletteArea = document.getElementById('roulette-area');
         const rouletteBelt = document.getElementById('roulette-belt');
         const finalResultCard = document.getElementById('final-result-card');
+        const billInput = document.getElementById('bill-total');
+        const tipInput = document.getElementById('tip-percent');
+        const splitDisplay = document.getElementById('split-result');
         
         let availableRestaurants = [];
         let userLat, userLon;
 
-        // --- RESTAURANT LOGIC ---
+        // Bill Splitting Logic
+        function updateSplit() {
+            const names = Array.from(document.querySelectorAll('.pay-name')).map(i => i.value.trim()).filter(n => n !== "").length;
+            const total = parseFloat(billInput.value) || 0;
+            const tip = parseFloat(tipInput.value);
+            if (total > 0 && names > 0) {
+                const grandTotal = total * (1 + tip);
+                const perPerson = grandTotal / names;
+                splitDisplay.innerText = `Total: $${grandTotal.toFixed(2)} | $${perPerson.toFixed(2)} Each`;
+            } else {
+                splitDisplay.innerText = "Add Names & Total to Split";
+            }
+        }
+        [billInput, tipInput].forEach(el => el.addEventListener('input', updateSplit));
+
+        // Name Management
+        function addNameField() {
+            const container = document.getElementById('names-container');
+            if (container.children.length >= 10) return;
+            const input = document.createElement('input');
+            input.className = "pay-name p-2 border border-gray-200 rounded-lg text-xs font-bold bg-white";
+            input.placeholder = `Name ${container.children.length + 1}`;
+            input.addEventListener('input', updateSplit);
+            container.appendChild(input);
+            updateSplit();
+        }
+
+        function resetNames() {
+            document.getElementById('names-container').innerHTML = `
+                <input type="text" placeholder="Name 1" class="pay-name p-2 border border-gray-200 rounded-lg text-xs font-bold bg-white">
+                <input type="text" placeholder="Name 2" class="pay-name p-2 border border-gray-200 rounded-lg text-xs font-bold bg-white">
+            `;
+            document.getElementById('payer-display').classList.add('hidden');
+            updateSplit();
+        }
+
         async function startSearch() {
             loader.classList.remove('hidden');
             try {
@@ -121,7 +163,7 @@
                     userLat = pos.coords.latitude; userLon = pos.coords.longitude;
                 }
                 fetchPlaces();
-            } catch (e) { alert("Need Location"); loader.classList.add('hidden'); }
+            } catch (e) { alert("Enable Location Access"); loader.classList.add('hidden'); }
         }
 
         async function fetchPlaces() {
@@ -130,24 +172,34 @@
             const data = await resp.json();
             
             availableRestaurants = data.elements.filter(e => e.tags.name).map(e => ({
-                id: e.id,
                 name: e.tags.name,
                 rating: e.tags.rating || (Math.random() * 1.2 + 3.8).toFixed(1),
                 website: e.tags.website || e.tags['contact:website'] || null,
                 type: (e.tags.cuisine || 'Restaurant').toUpperCase(),
                 lat: e.lat, lon: e.lon
             }));
-
-            listContainer.innerHTML = availableRestaurants.map(p => `
-                <div class="flex justify-between items-center p-2 bg-white/50 rounded-lg text-xs">
-                    <span class="font-bold truncate w-2/3">${p.name}</span>
-                    <span class="text-orange-500 font-black">⭐${p.rating}</span>
-                </div>
-            `).join('');
             
             pickBtn.disabled = false;
             loader.classList.add('hidden');
-            document.getElementById('location-status').innerText = "Found " + availableRestaurants.length + " Places";
+            document.getElementById('location-status').innerText = "Found " + availableRestaurants.length + " Options";
+        }
+
+        function spinForPayer() {
+            const names = Array.from(document.querySelectorAll('.pay-name')).map(i => i.value.trim()).filter(n => n !== "");
+            if (names.length < 2) return alert("Enter at least 2 names!");
+            
+            const display = document.getElementById('payer-display');
+            const nameTarget = document.getElementById('payer-name');
+            display.classList.remove('hidden');
+            
+            let i = 0;
+            const interval = setInterval(() => {
+                nameTarget.innerText = names[Math.floor(Math.random() * names.length)];
+                if (i++ > 25) {
+                    clearInterval(interval);
+                    nameTarget.innerText = names[Math.floor(Math.random() * names.length)];
+                }
+            }, 60);
         }
 
         pickBtn.addEventListener('click', () => {
@@ -155,13 +207,12 @@
             finalResultCard.classList.add('hidden');
             rouletteBelt.innerHTML = '';
             const winner = availableRestaurants[Math.floor(Math.random() * availableRestaurants.length)];
+            let scrollItems = "";
+            for(let i=0; i<20; i++) scrollItems += `<div class="roulette-item">${availableRestaurants[i % availableRestaurants.length].name}</div>`;
+            scrollItems += `<div class="roulette-item text-pink-600 font-black">${winner.name}</div>`;
+            rouletteBelt.innerHTML = scrollItems;
             
-            let items = "";
-            for(let i=0; i<30; i++) items += `<div class="roulette-item">${availableRestaurants[i % availableRestaurants.length].name}</div>`;
-            items += `<div class="roulette-item text-pink-600">${winner.name}</div>`;
-            rouletteBelt.innerHTML = items;
-            
-            document.documentElement.style.setProperty('--scroll-distance', `-${(30) * 80}px`);
+            document.documentElement.style.setProperty('--scroll-distance', `-${20 * 80}px`);
             rouletteBelt.classList.add('spinning');
             
             rouletteBelt.addEventListener('animationend', () => {
@@ -179,54 +230,6 @@
                 finalResultCard.classList.remove('hidden');
             }, {once: true});
         });
-
-        // --- CARD ROULETTE (WHO PAYS?) LOGIC ---
-        function addNameField() {
-            const container = document.getElementById('names-container');
-            if (container.children.length >= 10) return;
-            const input = document.createElement('input');
-            input.className = "pay-name p-2 border border-gray-200 rounded-lg text-xs font-bold bg-white/50";
-            input.placeholder = `Name ${container.children.length + 1}`;
-            container.appendChild(input);
-        }
-
-        function resetNames() {
-            const container = document.getElementById('names-container');
-            container.innerHTML = `
-                <input type="text" placeholder="Name 1" class="pay-name p-2 border border-gray-200 rounded-lg text-xs font-bold bg-white/50">
-                <input type="text" placeholder="Name 2" class="pay-name p-2 border border-gray-200 rounded-lg text-xs font-bold bg-white/50">
-            `;
-            document.getElementById('payer-display').classList.add('hidden');
-        }
-
-        function spinForPayer() {
-            const inputs = document.querySelectorAll('.pay-name');
-            const names = Array.from(inputs).map(i => i.value.trim()).filter(n => n !== "");
-            
-            if (names.length < 2) {
-                alert("Enter at least 2 names to see who pays!");
-                return;
-            }
-
-            const display = document.getElementById('payer-display');
-            const nameTarget = document.getElementById('payer-name');
-            display.classList.remove('hidden');
-            
-            // Fast "Shuffle" effect
-            let iterations = 0;
-            const interval = setInterval(() => {
-                nameTarget.innerText = names[Math.floor(Math.random() * names.length)];
-                iterations++;
-                if (iterations > 20) {
-                    clearInterval(interval);
-                    const finalWinner = names[Math.floor(Math.random() * names.length)];
-                    nameTarget.innerText = finalWinner;
-                    nameTarget.classList.add('pop-in');
-                    // Alert or Haptic feel
-                    if (navigator.vibrate) navigator.vibrate([100, 50, 100]);
-                }
-            }, 70);
-        }
 
         searchBtn.addEventListener('click', startSearch);
     </script>
