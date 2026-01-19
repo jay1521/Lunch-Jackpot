@@ -82,11 +82,11 @@
 
         .wheel-pointer {
             position: absolute;
-            top: -15px;
+            top: -25px;
             left: 50%;
             transform: translateX(-50%);
-            width: 40px;
-            height: 40px;
+            width: 60px;
+            height: 60px;
             z-index: 20;
             filter: drop-shadow(2px 2px 0px rgba(0,0,0,0.5));
         }
@@ -144,6 +144,12 @@
         <div id="view-jackpot" class="tab-view flex flex-col gap-4">
             <div class="cartoon-card p-4">
                 <h3 class="text-xs font-black uppercase mb-2 text-center text-blue-400">🍔 Dine & Dice</h3>
+                
+                <div class="mb-3">
+                    <input type="text" id="food-custom" placeholder="Variable Code (e.g. Ramen, Tacos, Vegan)" class="p-2 w-full text-sm border-dashed border-gray-400">
+                    <p class="text-[9px] text-gray-400 text-center mt-1 font-bold uppercase">Leave empty to use categories below</p>
+                </div>
+
                 <div class="grid grid-cols-2 gap-3 mb-3">
                     <input type="text" id="food-zip" placeholder="Zip Code" class="p-2 w-full text-sm">
                     <select id="food-dist" class="p-2 w-full text-sm">
@@ -156,11 +162,15 @@
                 <div class="grid grid-cols-2 gap-3 mb-3">
                     <select id="food-cuisine" class="p-2 w-full text-sm">
                         <option value="restaurant">🎡 All Food</option>
+                        <option value="healthy">🥗 Healthy</option>
+                        <option value="comfort">🍗 Comfort</option>
                         <option value="pizza">🍕 Pizza</option>
-                        <option value="mexican">🌮 Mexican</option>
                         <option value="burger">🍔 Burger</option>
-                        <option value="sushi">🍣 Sushi</option>
-                        <option value="thai">🍜 Thai</option>
+                        <option value="mexican">🌮 Mexican</option>
+                        <option value="asian">🍣 Asian/Sushi</option>
+                        <option value="italian">🍝 Italian</option>
+                        <option value="breakfast">🥞 Breakfast</option>
+                        <option value="dessert">🍦 Dessert</option>
                     </select>
                     <select id="food-budget" class="p-2 w-full text-sm">
                         <option value="4">Any Price</option>
@@ -180,8 +190,11 @@
             <div id="roulette-food-area" class="hidden mb-4 px-4">
                 <div class="wheel-container">
                     <canvas id="wheel-canvas-food"></canvas>
-                    <svg class="wheel-pointer" viewBox="0 0 100 100">
-                        <path d="M50 90 L20 20 L80 20 Z" fill="#FF5252" stroke="#1a1a1a" stroke-width="4"/>
+                    <svg class="wheel-pointer" viewBox="0 0 100 100" style="overflow: visible;">
+                        <g transform="translate(50, 50) rotate(180) translate(-50, -50)">
+                            <path d="M65,10 C75,10 75,40 65,90 L60,90 C60,40 60,10 65,10" fill="#FF5252" stroke="#1a1a1a" stroke-width="3" />
+                            <path d="M35,90 L35,50 C25,40 25,20 25,10 L30,10 L30,35 L33,35 L33,10 L37,10 L37,35 L40,35 L40,10 L45,10 C45,20 45,40 35,50" fill="#FF5252" stroke="#1a1a1a" stroke-width="3"/>
+                        </g>
                     </svg>
                     <div class="wheel-center-nut">
                         <div class="w-2 h-2 bg-black rounded-full opacity-20"></div>
@@ -248,7 +261,10 @@
                 <div class="wheel-container">
                     <canvas id="wheel-canvas-bar"></canvas>
                     <svg class="wheel-pointer" viewBox="0 0 100 100">
-                        <path d="M50 90 L20 20 L80 20 Z" fill="#BA68C8" stroke="#1a1a1a" stroke-width="4"/>
+                         <g transform="translate(50, 50) rotate(180) translate(-50, -50)">
+                            <path d="M65,10 C75,10 75,40 65,90 L60,90 C60,40 60,10 65,10" fill="#BA68C8" stroke="#1a1a1a" stroke-width="3" />
+                            <path d="M35,90 L35,50 C25,40 25,20 25,10 L30,10 L30,35 L33,35 L33,10 L37,10 L37,35 L40,35 L40,10 L45,10 C45,20 45,40 35,50" fill="#BA68C8" stroke="#1a1a1a" stroke-width="3"/>
+                        </g>
                     </svg>
                     <div class="wheel-center-nut">
                         <div class="w-2 h-2 bg-black rounded-full opacity-20"></div>
@@ -368,6 +384,7 @@
             const loader = document.getElementById('loader');
             loader.classList.remove('hidden');
             const zip = document.getElementById(mode + '-zip').value.trim();
+            const customQuery = document.getElementById('food-custom') ? document.getElementById('food-custom').value.trim() : "";
             
             try {
                 if (zip) {
@@ -390,9 +407,27 @@
                 let query = "";
                 
                 if (mode === 'food') {
-                    const cuisine = document.getElementById('food-cuisine').value;
-                    const filter = cuisine !== 'restaurant' ? `["cuisine"~"${cuisine}"]` : '';
-                    query = `[out:json];(node["amenity"~"restaurant|fast_food"]${filter}(around:${radius},${lat},${lon}););out 30;`;
+                    // VARIABLE CODE LOGIC: If custom text exists, use it. Otherwise use dropdown.
+                    if (customQuery) {
+                        // General search for Amenity OR Cuisine OR Name containing the custom text
+                        query = `[out:json];(
+                            node["amenity"~"restaurant|fast_food|cafe"]["name"~"${customQuery}",i](around:${radius},${lat},${lon});
+                            node["cuisine"~"${customQuery}",i](around:${radius},${lat},${lon});
+                        );out 30;`;
+                    } else {
+                        const cuisine = document.getElementById('food-cuisine').value;
+                        let filter = '';
+                        // EXTENDED CATEGORIES
+                        if(cuisine === 'healthy') filter = `["cuisine"~"vegetarian|vegan|salad|poke|smoothie"]`;
+                        else if(cuisine === 'comfort') filter = `["cuisine"~"diner|bbq|soul_food|fried_chicken|steak_house"]`;
+                        else if(cuisine === 'asian') filter = `["cuisine"~"japanese|chinese|thai|vietnamese|sushi|ramen"]`;
+                        else if(cuisine === 'breakfast') filter = `["cuisine"~"breakfast|pancake|coffee_shop|bagel"]`;
+                        else if(cuisine === 'dessert') filter = `["cuisine"~"ice_cream|bakery|donut|dessert"]`;
+                        else if(cuisine === 'italian') filter = `["cuisine"~"italian|pizza|pasta"]`;
+                        else if(cuisine !== 'restaurant') filter = `["cuisine"~"${cuisine}"]`;
+
+                        query = `[out:json];(node["amenity"~"restaurant|fast_food|cafe"]${filter}(around:${radius},${lat},${lon}););out 30;`;
+                    }
                 } else {
                     const vibe = document.getElementById('bar-vibe').value; 
                     const filter = vibe !== 'bar' ? `["amenity"="${vibe}"]` : `["amenity"~"^(bar|pub|nightclub|lounge|biergarten)$"]`;
@@ -405,7 +440,9 @@
                 restaurants = data.elements.filter(e => e.tags.name).map(e => ({
                     id: e.id.toString(),
                     name: e.tags.name,
-                    type: (e.tags.amenity || 'Place').replace('_', ' ').toUpperCase(),
+                    // Store cuisine for the icon logic
+                    rawCuisine: e.tags.cuisine || e.tags.amenity,
+                    type: (e.tags.cuisine || e.tags.amenity || 'Place').replace(/_/g, ' ').toUpperCase(),
                     rating: e.tags.rating || (Math.random() * 1.2 + 3.8).toFixed(1),
                     lat: e.lat, lon: e.lon,
                     hours: e.tags.opening_hours || "Hours not available",
@@ -435,7 +472,7 @@
                     <div class="flex justify-between items-center mb-2">
                         <div class="w-2/3">
                             <h4 class="font-black text-sm truncate">${p.name}</h4>
-                            <p class="text-[9px] uppercase font-bold text-gray-500">${p.type} • ${p.dist} mi</p>
+                            <p class="text-[9px] uppercase font-bold text-gray-500">${getIconForType(p.rawCuisine)} ${p.type} • ${p.dist} mi</p>
                         </div>
                         <div class="flex gap-2">
                             <a href="https://www.google.com/search?q=${encodeURIComponent(p.name + ' Menu')}" target="_blank" class="text-xs bg-gray-100 border border-black px-2 py-1 rounded font-bold hover:bg-yellow-200">📖</a>
@@ -447,6 +484,25 @@
                          <div class="hours-content text-[9px] text-gray-600 mt-1 font-bold">${p.hours}</div>
                     </div>
                 </div>`).join('');
+        }
+
+        // --- HELPER FOR ICONS (The "Picture" of the wheel) ---
+        function getIconForType(type) {
+            if(!type) return '🍽️';
+            const t = type.toLowerCase();
+            if(t.includes('pizza')) return '🍕';
+            if(t.includes('burger')) return '🍔';
+            if(t.includes('taco') || t.includes('mexican')) return '🌮';
+            if(t.includes('sushi') || t.includes('japanese')) return '🍣';
+            if(t.includes('noodle') || t.includes('ramen') || t.includes('thai')) return '🍜';
+            if(t.includes('coffee') || t.includes('cafe')) return '☕';
+            if(t.includes('ice_cream') || t.includes('dessert')) return '🍦';
+            if(t.includes('salad') || t.includes('vegetarian') || t.includes('healthy')) return '🥗';
+            if(t.includes('bar') || t.includes('pub')) return '🍺';
+            if(t.includes('steak') || t.includes('bbq')) return '🥩';
+            if(t.includes('chicken')) return '🍗';
+            if(t.includes('donut')) return '🍩';
+            return '🍽️';
         }
 
         // --- NEW WHEEL LOGIC ---
@@ -479,21 +535,24 @@
                 ctx.strokeStyle = "#1a1a1a";
                 ctx.stroke();
 
-                // Draw Text
+                // Draw Text & Icon
                 ctx.save();
                 ctx.translate(cx, cy);
                 ctx.rotate(startAngle + sliceAngle / 2);
                 ctx.textAlign = "right";
                 ctx.fillStyle = "#1a1a1a";
+                
+                // Draw Icon (The "Picture" part)
+                const icon = getIconForType(item.rawCuisine);
+                ctx.font = "50px serif"; 
+                // Place icon towards center-middle of slice
+                ctx.fillText(icon, radius - 80, 15);
+
+                // Draw Name
                 ctx.font = "900 24px 'Nunito'";
                 // Truncate text
-                let text = item.name.length > 12 ? item.name.substring(0, 10) + ".." : item.name;
-                ctx.fillText(text, radius - 40, 10);
-                
-                // Add a dot icon
-                ctx.beginPath();
-                ctx.arc(radius - 20, 0, 5, 0, 2*Math.PI);
-                ctx.fill();
+                let text = item.name.length > 10 ? item.name.substring(0, 8) + ".." : item.name;
+                ctx.fillText(text, radius - 20, 10);
                 
                 ctx.restore();
             });
@@ -507,21 +566,17 @@
                 let pool = [];
                 restaurants.forEach(p => { pool.push(p); if(favs.includes(p.id)) pool.push(p); });
                 
-                if (pool.length === 0) return alert("No places found!");
+                if (pool.length === 0) return alert("No places found! Try a broader search.");
 
                 // 2. Select Winner
                 currentWinner = pool[Math.floor(Math.random() * pool.length)];
                 
-                // 3. Prepare Wheel Items (To keep UI clean, max 8 items on wheel, ensuring winner is one)
+                // 3. Prepare Wheel Items (Max 8)
                 let wheelItems = [];
                 let candidates = pool.filter(p => p.id !== currentWinner.id);
-                // Shuffle candidates
                 candidates.sort(() => Math.random() - 0.5);
-                // Take up to 7 others
                 wheelItems = candidates.slice(0, 7);
-                // Add winner
                 wheelItems.push(currentWinner);
-                // Shuffle again so winner isn't always last
                 wheelItems.sort(() => Math.random() - 0.5);
                 
                 const winnerIndex = wheelItems.findIndex(p => p.id === currentWinner.id);
@@ -533,39 +588,28 @@
                 
                 // 5. Calculate Animation Math
                 // Canvas 0 is 3 o'clock. Pointer is at 270 deg (Top).
-                // We need the center of the winner slice to land at 270 deg.
                 const sliceAngle = (2 * Math.PI) / wheelItems.length;
                 const sliceCenter = winnerIndex * sliceAngle + (sliceAngle / 2);
                 
-                // Target rotation logic
-                // To land at Top (3*PI/2), we need: Rotation + sliceCenter = 3*PI/2 + k*2PI
-                // Rotation = 3*PI/2 - sliceCenter + spins
-                const spins = 5; // Full rotations
+                // Target: 3*PI/2
+                const spins = 5; 
                 const targetRotation = (3 * Math.PI / 2) - sliceCenter + (spins * 2 * Math.PI);
                 
                 let currentRotation = 0;
                 let startTime = null;
-                const duration = 5000; // 5 seconds
+                const duration = 5000;
                 const canvasId = 'wheel-canvas-' + mode;
 
                 function animate(timestamp) {
                     if (!startTime) startTime = timestamp;
                     const elapsed = timestamp - startTime;
                     const progress = Math.min(elapsed / duration, 1);
-                    
-                    // Ease Out Quint
-                    const ease = 1 - Math.pow(1 - progress, 5);
-                    
+                    const ease = 1 - Math.pow(1 - progress, 5); // Ease Out Quint
                     currentRotation = targetRotation * ease;
-                    
                     drawWheel(canvasId, wheelItems, currentRotation);
 
-                    if (progress < 1) {
-                        requestAnimationFrame(animate);
-                    } else {
-                        // Animation Complete
-                        finishSpin();
-                    }
+                    if (progress < 1) requestAnimationFrame(animate);
+                    else finishSpin();
                 }
 
                 function finishSpin() {
