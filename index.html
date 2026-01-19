@@ -7,159 +7,277 @@
     <script src="https://cdn.tailwindcss.com"></script>
     <link rel="stylesheet" href="https://unpkg.com/leaflet@1.9.4/dist/leaflet.css" />
     <script src="https://unpkg.com/leaflet@1.9.4/dist/leaflet.js"></script>
+    <link href="https://fonts.googleapis.com/css2?family=Titan+One&family=Nunito:wght@400;700;900&display=swap" rel="stylesheet">
+    
     <style>
-        body {
-            background: linear-gradient(135deg, #1e1b4b, #4338ca, #7e22ce);
-            background-size: 400% 400%;
-            animation: gradientBG 15s ease infinite;
+        /* CARTOON THEME OVERHAUL */
+        :root {
+            --bg-cream: #FFF8E1;
+            --accent-orange: #FF8A65;
+            --accent-red: #FF5252;
+            --accent-blue: #4FC3F7;
+            --accent-green: #81C784;
+            --border-color: #1a1a1a;
         }
-        @keyframes gradientBG { 0% { background-position: 0% 50%; } 50% { background-position: 100% 50%; } 100% { background-position: 0% 50%; } }
-        .glass-card { background: rgba(255, 255, 255, 0.96); backdrop-filter: blur(12px); -webkit-backdrop-filter: blur(12px); border: 1px solid rgba(255,255,255,0.4); }
-        
-        .user-location-dot { width: 14px; height: 14px; background-color: #3b82f6; border: 2px solid white; border-radius: 50%; box-shadow: 0 0 10px rgba(59, 130, 246, 0.8); position: relative; }
-        .user-location-dot::after { content: ""; position: absolute; top: -4px; left: -4px; width: 18px; height: 18px; border-radius: 50%; background: rgba(59, 130, 246, 0.4); animation: pulse 2s infinite; }
-        @keyframes pulse { 0% { transform: scale(1); opacity: 1; } 100% { transform: scale(3); opacity: 0; } }
 
-        .roulette-window { height: 80px; overflow: hidden; position: relative; border-radius: 12px; background: #fff; border: 4px solid #f59e0b; }
+        body {
+            background-color: var(--bg-cream);
+            background-image: radial-gradient(#FFE0B2 2px, transparent 2px);
+            background-size: 20px 20px;
+            font-family: 'Nunito', sans-serif;
+            color: var(--border-color);
+        }
+
+        /* Typography */
+        h1, h2, h3, .tab-btn {
+            font-family: 'Titan One', cursive;
+            letter-spacing: 1px;
+        }
+
+        /* Cartoon Card Style (Replaces Glassmorphism) */
+        .cartoon-card {
+            background: white;
+            border: 3px solid var(--border-color);
+            border-radius: 16px;
+            box-shadow: 6px 6px 0px 0px rgba(0,0,0,0.8);
+            margin-bottom: 16px;
+            transition: transform 0.1s;
+        }
+        
+        /* Inputs */
+        input, select {
+            border: 2px solid var(--border-color) !important;
+            background: #fff !important;
+            border-radius: 12px !important;
+            font-weight: 800 !important;
+            box-shadow: 2px 2px 0px 0px rgba(0,0,0,0.2);
+        }
+        
+        /* Main Action Button */
+        #pick-btn, #search-btn, #spin-payer-btn {
+            background: var(--accent-red);
+            color: white;
+            border: 3px solid var(--border-color);
+            border-radius: 50px;
+            box-shadow: 4px 4px 0px 0px #000;
+            text-transform: uppercase;
+            font-family: 'Titan One', cursive;
+            transition: all 0.1s;
+        }
+        #pick-btn:active, #search-btn:active, #spin-payer-btn:active {
+            transform: translate(2px, 2px);
+            box-shadow: 2px 2px 0px 0px #000;
+        }
+
+        /* Tabs */
+        .tab-btn {
+            color: #555;
+            border: 2px solid transparent;
+        }
+        .tab-btn.active {
+            background: var(--accent-blue);
+            color: white;
+            border: 3px solid var(--border-color);
+            border-radius: 12px;
+            box-shadow: 3px 3px 0px 0px #000;
+            transform: translateY(-2px);
+        }
+
+        /* Roulette Window */
+        .roulette-window { 
+            height: 100px; 
+            overflow: hidden; 
+            position: relative; 
+            border-radius: 16px; 
+            background: #fff; 
+            border: 4px solid var(--border-color);
+            box-shadow: inset 0 0 10px rgba(0,0,0,0.1);
+        }
+        /* Middle Line Indicator */
+        .roulette-window::after {
+            content: "▼";
+            position: absolute;
+            top: -5px;
+            left: 50%;
+            transform: translateX(-50%);
+            color: var(--accent-red);
+            font-size: 24px;
+            z-index: 10;
+            text-shadow: 2px 2px 0 #000;
+        }
+
         .roulette-belt { display: flex; flex-direction: column; align-items: center; transform: translateY(0); }
-        .roulette-item { height: 80px; display: flex; align-items: center; justify-content: center; font-weight: 800; font-size: 1.1rem; color: #333; text-align: center; padding: 0 10px; width: 100%; }
+        .roulette-item { 
+            height: 100px; 
+            display: flex; 
+            align-items: center; 
+            justify-content: center; 
+            font-family: 'Titan One', cursive;
+            font-size: 1.4rem; 
+            color: #333; 
+            text-align: center; 
+            padding: 0 10px; 
+            width: 100%; 
+            /* Alternating colors for list items to mimic wheel slices */
+            background-color: #fff;
+        }
+        .roulette-item:nth-child(odd) { background-color: #E1F5FE; }
+        .roulette-item:nth-child(even) { background-color: #FFF3E0; }
+
+        /* Animations */
         .spinning { animation: slideUp 4s cubic-bezier(0.1, 1, 0.2, 1) forwards; }
         @keyframes slideUp { 0% { transform: translateY(0); } 100% { transform: translateY(var(--scroll-distance)); } }
         .pop-in { animation: pop 0.4s cubic-bezier(0.34, 1.56, 0.64, 1) forwards; }
         @keyframes pop { 0% { transform: scale(0.9); opacity: 0; } 100% { transform: scale(1); opacity: 1; } }
         
-        .tab-btn.active { background: white; color: #4338ca; border-radius: 12px; box-shadow: 0 4px 12px rgba(0,0,0,0.1); }
-        .loader { border: 3px solid rgba(255,255,255,0.3); border-top: 3px solid white; border-radius: 50%; width: 18px; height: 18px; animation: spin 1s linear infinite; }
-        @keyframes spin { 0% { transform: rotate(0deg); } 100% { transform: rotate(360deg); } }
-        #map-container { height: 400px; width: 100%; border-radius: 16px; border: 4px solid white; overflow: hidden; }
+        /* Map Styles */
+        .user-location-dot { width: 16px; height: 16px; background-color: var(--accent-blue); border: 3px solid white; border-radius: 50%; box-shadow: 0 0 0 2px black; position: relative; }
+        #map-container { height: 400px; width: 100%; border-radius: 12px; border: 3px solid var(--border-color); overflow: hidden; }
+        
+        .photo-wrapper { position: relative; width: 100%; height: 160px; margin-bottom: 12px; border-radius: 12px; overflow: hidden; border: 3px solid black; }
+        #winner-photo { width: 100%; height: 100%; object-fit: cover; }
+        .photo-overlay-btn { position: absolute; bottom: 8px; right: 8px; background: white; color: black; font-size: 10px; font-weight: 900; padding: 6px 12px; border-radius: 20px; border: 2px solid black; box-shadow: 2px 2px 0 black; text-transform: uppercase; }
         
         .hours-content { max-height: 0; overflow: hidden; transition: max-height 0.3s ease-out; }
         .hours-row.active .hours-content { max-height: 120px; overflow-y: auto; }
+        
+        /* Header Text Stroke */
+        .cartoon-title {
+            color: var(--accent-orange);
+            -webkit-text-stroke: 1.5px black;
+            text-shadow: 3px 3px 0px #000;
+        }
     </style>
 </head>
-<body class="font-sans min-h-screen pb-24">
+<body class="min-h-screen pb-28">
 
-    <header class="w-full max-w-md mx-auto p-6 text-center text-white">
-        <h1 class="text-4xl font-black drop-shadow-lg italic">JACKPOT 🎰</h1>
-        <div class="mt-2 flex justify-center items-center gap-2 bg-black/10 py-1 px-4 rounded-full inline-flex text-[9px] font-black uppercase tracking-widest">
-            <div id="loader" class="loader hidden"></div>
-            <span id="location-status">Ready to Spin</span>
+    <header class="w-full max-w-md mx-auto p-6 text-center">
+        <h1 class="text-4xl cartoon-title mb-2">LUNCH<br>ROULETTE</h1>
+        <div class="inline-block bg-white border-2 border-black rounded-full px-4 py-1 shadow-[2px_2px_0px_0px_rgba(0,0,0,1)]">
+            <div class="flex items-center gap-2">
+                <div id="loader" class="loader hidden w-3 h-3 border-2 border-black border-t-transparent rounded-full animate-spin"></div>
+                <span id="location-status" class="text-[10px] font-black uppercase text-black">Ready to Spin</span>
+            </div>
         </div>
     </header>
 
-    <nav class="fixed bottom-4 left-1/2 -translate-x-1/2 w-[94%] max-w-md glass-card rounded-2xl p-1 flex justify-between items-center z-[1000] shadow-2xl">
-        <button onclick="switchTab('jackpot')" id="tab-jackpot" class="tab-btn active flex-1 py-3 text-[9px] font-black uppercase transition-all">🎰 Play</button>
-        <button onclick="switchTab('map')" id="tab-map" class="tab-btn flex-1 py-3 text-[9px] font-black uppercase transition-all">🗺️ Map</button>
-        <button onclick="switchTab('bill')" id="tab-bill" class="tab-btn flex-1 py-3 text-[9px] font-black uppercase transition-all">💸 Bill</button>
-        <button onclick="switchTab('history')" id="tab-history" class="tab-btn flex-1 py-3 text-[9px] font-black uppercase transition-all">📜 Wins</button>
+    <nav class="fixed bottom-6 left-1/2 -translate-x-1/2 w-[90%] max-w-md bg-white border-4 border-black rounded-2xl p-2 flex justify-between items-center z-[1000] shadow-[6px_6px_0px_0px_rgba(0,0,0,1)]">
+        <button onclick="switchTab('jackpot')" id="tab-jackpot" class="tab-btn active flex-1 py-3 text-[10px] font-black uppercase transition-all">🎰 Play</button>
+        <button onclick="switchTab('map')" id="tab-map" class="tab-btn flex-1 py-3 text-[10px] font-black uppercase transition-all">🗺️ Map</button>
+        <button onclick="switchTab('bill')" id="tab-bill" class="tab-btn flex-1 py-3 text-[10px] font-black uppercase transition-all">💸 Bill</button>
+        <button onclick="switchTab('history')" id="tab-history" class="tab-btn flex-1 py-3 text-[10px] font-black uppercase transition-all">📜 Wins</button>
     </nav>
 
     <main class="w-full max-w-md mx-auto px-4">
         
         <div id="view-jackpot" class="tab-view flex flex-col gap-4">
-            <div class="glass-card p-4 rounded-2xl">
-                <div class="grid grid-cols-2 gap-2 mb-2">
-                    <input type="text" id="zip-input" placeholder="Zip or GPS" class="p-2 border rounded-lg text-xs font-bold outline-none">
-                    <select id="distance-input" class="p-2 border rounded-lg text-xs font-bold outline-none">
+            <div class="cartoon-card p-4">
+                <h3 class="text-xs font-black uppercase mb-2 text-center">🎯 Search Settings</h3>
+                <div class="grid grid-cols-2 gap-3 mb-3">
+                    <input type="text" id="zip-input" placeholder="Zip Code" class="p-2 w-full text-sm">
+                    <select id="distance-input" class="p-2 w-full text-sm">
                         <option value="1609">1 Mile</option>
                         <option value="4828" selected>3 Miles</option>
                         <option value="8046">5 Miles</option>
                         <option value="16093">10 Miles</option>
                     </select>
                 </div>
-                <div class="grid grid-cols-2 gap-2 mb-2">
-                    <select id="cuisine-input" class="p-2 border rounded-lg text-xs font-bold outline-none">
-                        <option value="restaurant">🎡 All Cuisines</option>
+                <div class="grid grid-cols-2 gap-3 mb-3">
+                    <select id="cuisine-input" class="p-2 w-full text-sm">
+                        <option value="restaurant">🎡 All Food</option>
                         <option value="pizza">🍕 Pizza</option>
                         <option value="mexican">🌮 Mexican</option>
-                        <option value="burger">🍔 Burgers</option>
-                        <option value="sushi">🍣 Japanese</option>
+                        <option value="burger">🍔 Burger</option>
+                        <option value="sushi">🍣 Sushi</option>
+                        <option value="thai">🍜 Thai</option>
                     </select>
-                    <select id="budget-input" class="p-2 border rounded-lg text-xs font-bold outline-none">
+                    <select id="budget-input" class="p-2 w-full text-sm">
                         <option value="4">Any Price</option>
                         <option value="1">$ Cheap</option>
                         <option value="2">$$ Mid</option>
                     </select>
                 </div>
-                <div class="flex justify-center mb-2">
-                    <label class="flex items-center gap-2 justify-center bg-white/50 px-4 py-2 rounded-lg cursor-pointer w-full">
-                        <input type="checkbox" id="open-now-check" class="w-4 h-4 accent-pink-600">
-                        <span class="text-[9px] font-black uppercase">Open Now Only</span>
+                <div class="flex justify-center mb-3">
+                    <label class="flex items-center gap-2 justify-center bg-gray-100 border-2 border-black px-4 py-2 rounded-lg cursor-pointer w-full">
+                        <input type="checkbox" id="open-now-check" class="w-5 h-5 accent-red-500 rounded border-2 border-black">
+                        <span class="text-xs font-black uppercase">Open Now Only</span>
                     </label>
                 </div>
-                <button id="search-btn" class="w-full bg-slate-900 text-white text-[10px] font-black py-3 rounded-xl uppercase">Update Local List</button>
+                <button id="search-btn" class="w-full py-3 text-sm tracking-wider bg-blue-400">Update Restaurants</button>
             </div>
 
-            <div id="roulette-area" class="hidden"><div class="roulette-window"><div id="roulette-belt" class="roulette-belt"></div></div></div>
+            <div id="roulette-area" class="hidden my-4"><div class="roulette-window"><div id="roulette-belt" class="roulette-belt"></div></div></div>
             
-            <div id="final-result-card" class="hidden glass-card p-5 rounded-2xl border-4 border-yellow-400 pop-in text-center">
-                <p class="text-[10px] font-black text-yellow-600 uppercase tracking-widest mb-1">🎉 WINNER 🎉</p>
+            <div id="final-result-card" class="hidden cartoon-card p-4 text-center border-yellow-400 bg-yellow-50">
+                <div class="photo-wrapper">
+                    <img id="winner-photo" src="" alt="Food">
+                    <a id="real-photos-link" href="#" target="_blank" class="photo-overlay-btn"><span>📷 Real Photos</span></a>
+                </div>
                 
-                <h2 id="winner-name" class="text-3xl font-black text-gray-900 leading-none mb-2">--</h2>
+                <h2 id="winner-name" class="text-2xl font-black text-gray-900 leading-none mb-1 mt-2" style="font-family: 'Titan One';">--</h2>
                 <div id="winner-rating" class="text-orange-500 font-bold text-sm mb-2"></div>
-                <p id="winner-details" class="text-gray-500 text-[10px] font-black mb-6 uppercase">--</p>
+                <p id="winner-details" class="text-gray-600 text-xs font-black mb-4 uppercase tracking-widest">--</p>
                 
-                <a id="menu-btn" href="#" target="_blank" class="block w-full bg-orange-500 hover:bg-orange-600 text-white font-black py-4 rounded-xl text-lg shadow-lg mb-3 flex items-center justify-center gap-2 transition-transform active:scale-95">
-                    <span>📖</span>
-                    <span>VIEW MENU</span>
+                <a id="menu-btn" href="#" target="_blank" class="block w-full bg-orange-400 text-white font-black py-3 rounded-xl border-2 border-black shadow-[3px_3px_0_black] mb-3 flex items-center justify-center gap-2 active:translate-y-1 active:shadow-none transition-all">
+                    <span>📖 VIEW MENU</span>
                 </a>
 
-                <div class="grid grid-cols-2 gap-2">
-                    <a id="maps-link" href="#" target="_blank" class="bg-indigo-600 text-white text-[10px] font-black py-3 text-center rounded-xl uppercase">🗺️ Directions</a>
-                    <button id="share-btn" class="bg-emerald-500 text-white text-[10px] font-black py-3 text-center rounded-xl uppercase">📤 Share</button>
+                <div class="grid grid-cols-2 gap-3">
+                    <a id="maps-link" href="#" target="_blank" class="bg-blue-500 text-white text-xs font-black py-3 rounded-xl border-2 border-black shadow-[3px_3px_0_black] active:translate-y-1 active:shadow-none transition-all uppercase">🗺️ Go There</a>
+                    <button id="share-btn" class="bg-green-500 text-white text-xs font-black py-3 rounded-xl border-2 border-black shadow-[3px_3px_0_black] active:translate-y-1 active:shadow-none transition-all uppercase">📤 Share</button>
                 </div>
-                <a id="website-link" href="#" target="_blank" class="block mt-4 text-center underline font-black text-indigo-600 text-[10px] uppercase">Official Website</a>
+                <a id="website-link" href="#" target="_blank" class="block mt-4 text-center underline font-black text-gray-500 text-[10px] uppercase">Official Website</a>
             </div>
 
-            <button id="pick-btn" disabled class="w-full bg-gradient-to-r from-pink-600 to-indigo-600 text-white font-black py-5 rounded-2xl text-xl shadow-xl active:scale-95 transition-all">🎲 SPIN THE WHEEL</button>
+            <button id="pick-btn" disabled class="w-full py-5 text-xl tracking-widest mb-4">SPIN FOR LUNCH!</button>
 
-            <div class="glass-card p-4 rounded-2xl">
-                <h3 class="text-[10px] font-black text-gray-400 uppercase mb-3 tracking-widest">Restaurant List</h3>
-                <div id="restaurant-list" class="flex flex-col gap-2 max-h-60 overflow-y-auto"></div>
+            <div class="cartoon-card p-4">
+                <h3 class="text-xs font-black uppercase mb-3 text-gray-400">👇 Candidates</h3>
+                <div id="restaurant-list" class="flex flex-col gap-3 max-h-60 overflow-y-auto pr-1"></div>
             </div>
         </div>
 
         <div id="view-map" class="tab-view hidden flex flex-col gap-4">
-            <div class="glass-card p-2 rounded-2xl">
+            <div class="cartoon-card p-2">
                 <div id="map-container"></div>
                 <div class="p-3 text-center flex justify-center items-center gap-2">
-                    <span class="w-3 h-3 bg-blue-500 rounded-full border border-white shadow"></span>
-                    <p class="text-[10px] font-black text-indigo-600 uppercase">You are here</p>
+                    <span class="w-4 h-4 bg-blue-500 rounded-full border-2 border-white ring-2 ring-black"></span>
+                    <p class="text-xs font-black uppercase">You are here</p>
                 </div>
             </div>
         </div>
 
         <div id="view-bill" class="tab-view hidden flex flex-col gap-4">
-            <div class="glass-card p-5 rounded-2xl shadow-lg">
-                <h3 class="text-xs font-black text-indigo-600 uppercase mb-4 tracking-widest border-b pb-2">Split the Bill</h3>
-                <div class="grid grid-cols-3 gap-2 mb-3">
-                    <div><label class="text-[8px] font-black uppercase text-gray-400 ml-1">Total $</label><input type="number" id="bill-total" class="w-full p-2 border rounded-lg text-xs font-bold"></div>
-                    <div><label class="text-[8px] font-black uppercase text-gray-400 ml-1">Tip %</label><select id="tip-percent" class="w-full p-2 border rounded-lg text-xs font-bold"><option value="0.18">18%</option><option value="0.20">20%</option><option value="0.25">25%</option></select></div>
-                    <div><label class="text-[8px] font-black uppercase text-gray-400 ml-1">People</label><input type="number" id="people-count" class="w-full p-2 border rounded-lg text-xs font-bold"></div>
+            <div class="cartoon-card p-5">
+                <h3 class="text-sm font-black text-center mb-4 uppercase border-b-2 border-gray-100 pb-2">🧮 Split the Bill</h3>
+                <div class="grid grid-cols-3 gap-2 mb-4">
+                    <div><label class="text-[9px] font-black uppercase ml-1">Total $</label><input type="number" id="bill-total" class="w-full p-2 text-sm"></div>
+                    <div><label class="text-[9px] font-black uppercase ml-1">Tip %</label><select id="tip-percent" class="w-full p-2 text-sm"><option value="0.18">18%</option><option value="0.20">20%</option><option value="0.25">25%</option></select></div>
+                    <div><label class="text-[9px] font-black uppercase ml-1">People</label><input type="number" id="people-count" class="w-full p-2 text-sm"></div>
                 </div>
-                <div id="split-result" class="bg-indigo-50 p-4 rounded-xl text-center text-indigo-800 font-black text-xs uppercase border border-indigo-100 italic">Waiting...</div>
+                <div id="split-result" class="bg-blue-50 border-2 border-black rounded-xl p-4 text-center font-black text-sm uppercase">Waiting...</div>
             </div>
 
-            <div class="glass-card p-5 rounded-2xl shadow-lg">
-                <h3 class="text-xs font-black text-emerald-600 uppercase mb-4 tracking-widest border-b pb-2">Card Roulette</h3>
+            <div class="cartoon-card p-5">
+                <h3 class="text-sm font-black text-center mb-4 uppercase border-b-2 border-gray-100 pb-2">💳 Card Roulette</h3>
                 <div id="names-grid" class="grid grid-cols-2 gap-2 mb-3 max-h-40 overflow-y-auto">
-                    <input type="text" class="payer-input p-2 border rounded-lg text-xs font-bold bg-white" placeholder="Name 1">
-                    <input type="text" class="payer-input p-2 border rounded-lg text-xs font-bold bg-white" placeholder="Name 2">
+                    <input type="text" class="payer-input p-2 text-sm" placeholder="Name 1">
+                    <input type="text" class="payer-input p-2 text-sm" placeholder="Name 2">
                 </div>
                 <div class="flex gap-2 mb-4">
-                    <button onclick="addNameSlot()" class="flex-1 bg-gray-100 text-[9px] font-black py-2 rounded-lg text-gray-500 uppercase">+ Add Player (Max 10)</button>
-                    <button onclick="clearNames()" class="flex-1 bg-gray-100 text-[9px] font-black py-2 rounded-lg text-gray-500 uppercase">Reset</button>
+                    <button onclick="addNameSlot()" class="flex-1 bg-gray-200 border-2 border-black rounded-lg py-2 text-[10px] font-black uppercase hover:bg-white">+ Add</button>
+                    <button onclick="clearNames()" class="flex-1 bg-gray-200 border-2 border-black rounded-lg py-2 text-[10px] font-black uppercase hover:bg-white">Reset</button>
                 </div>
-                <button onclick="spinForPayer()" class="w-full bg-emerald-600 text-white font-black py-4 rounded-xl shadow-lg uppercase text-xs">Who Pays?</button>
-                <div id="payer-result-box" class="hidden p-6 bg-emerald-600 text-white rounded-2xl text-center mt-4 pop-in shadow-inner">
-                    <h2 id="payer-result-name" class="text-3xl font-black italic">--</h2>
+                <button id="spin-payer-btn" onclick="spinForPayer()" class="w-full py-4 text-sm bg-green-500">Who Pays?</button>
+                <div id="payer-result-box" class="hidden p-6 bg-green-500 border-4 border-black text-white rounded-2xl text-center mt-4 pop-in shadow-[4px_4px_0_black]">
+                    <h2 id="payer-result-name" class="text-3xl font-black italic" style="font-family: 'Titan One';">--</h2>
                 </div>
             </div>
         </div>
 
         <div id="view-history" class="tab-view hidden flex flex-col gap-4">
-            <div class="glass-card p-5 rounded-2xl min-h-[400px]">
-                <h3 class="text-xs font-black text-pink-600 uppercase tracking-widest mb-4 border-b pb-2">Win History</h3>
+            <div class="cartoon-card p-5 min-h-[400px]">
+                <h3 class="text-sm font-black text-center mb-4 uppercase border-b-2 border-gray-100 pb-2">🏆 Win History</h3>
                 <div id="history-list" class="flex flex-col gap-3"></div>
             </div>
         </div>
@@ -256,20 +374,20 @@
 
         function renderList() {
             document.getElementById('restaurant-list').innerHTML = restaurants.map(p => `
-                <div class="hours-row p-3 bg-white/60 rounded-xl border border-white">
+                <div class="hours-row p-3 bg-white border-2 border-black rounded-xl mb-2 shadow-[2px_2px_0_rgba(0,0,0,0.1)]">
                     <div class="flex justify-between items-center mb-2">
                         <div class="w-2/3">
-                            <h4 class="font-bold text-[10px] truncate">${p.name}</h4>
-                            <p class="text-[8px] uppercase font-bold text-gray-500">${p.type} • ${p.dist} mi</p>
+                            <h4 class="font-black text-sm truncate">${p.name}</h4>
+                            <p class="text-[9px] uppercase font-bold text-gray-500">${p.type} • ${p.dist} mi</p>
                         </div>
                         <div class="flex gap-2">
-                            <a href="https://www.google.com/search?q=${encodeURIComponent(p.name + ' Menu')}" target="_blank" class="text-xs bg-gray-200 px-2 py-1 rounded">📖</a>
-                            <button onclick="toggleFav('${p.id}')" class="star-btn ${favs.includes(p.id) ? 'text-yellow-500' : 'text-gray-300'}">★</button>
+                            <a href="https://www.google.com/search?q=${encodeURIComponent(p.name + ' Menu')}" target="_blank" class="text-xs bg-gray-100 border border-black px-2 py-1 rounded font-bold hover:bg-yellow-200">📖</a>
+                            <button onclick="toggleFav('${p.id}')" class="star-btn ${favs.includes(p.id) ? 'text-yellow-500 text-lg' : 'text-gray-300'}">★</button>
                         </div>
                     </div>
                     <div>
-                         <button onclick="this.parentElement.parentElement.classList.toggle('active')" class="text-[7px] font-black text-indigo-500 uppercase flex items-center gap-1">🕒 View Hours ▼</button>
-                         <div class="hours-content text-[8px] text-gray-500 mt-1 italic">${p.hours}</div>
+                         <button onclick="this.parentElement.parentElement.classList.toggle('active')" class="text-[9px] font-black text-blue-500 uppercase flex items-center gap-1 hover:underline">🕒 View Hours ▼</button>
+                         <div class="hours-content text-[9px] text-gray-600 mt-1 font-bold">${p.hours}</div>
                     </div>
                 </div>`).join('');
         }
@@ -286,22 +404,33 @@
             document.getElementById('final-result-card').classList.add('hidden');
             
             let items = "";
-            for(let i=0; i<30; i++) items += `<div class="roulette-item text-xs">${pool[i % pool.length].name}</div>`;
-            items += `<div class="roulette-item text-pink-600 font-black">${currentWinner.name}</div>`;
+            // Generating items for the slot reel
+            for(let i=0; i<30; i++) items += `<div class="roulette-item">${pool[i % pool.length].name}</div>`;
+            items += `<div class="roulette-item text-red-500 font-black">${currentWinner.name}</div>`;
             belt.innerHTML = items;
             
-            document.documentElement.style.setProperty('--scroll-distance', `-${30 * 80}px`);
+            document.documentElement.style.setProperty('--scroll-distance', `-${30 * 100}px`); // 100px is item height
             belt.classList.add('spinning');
             
             belt.addEventListener('animationend', () => {
                 area.classList.add('hidden');
                 belt.classList.remove('spinning');
+                
+                // PHOTO & MENU LOGIC
+                let query = currentWinner.cuisine;
+                if(currentWinner.name.toLowerCase().includes('burger')) query = 'burger';
+                else if(currentWinner.name.toLowerCase().includes('pizza')) query = 'pizza';
+                else if(currentWinner.name.toLowerCase().includes('taco')) query = 'taco';
+                else if(currentWinner.name.toLowerCase().includes('sushi')) query = 'sushi';
+                
+                document.getElementById('winner-photo').src = `https://loremflickr.com/400/250/${query},food/all`;
+                document.getElementById('real-photos-link').href = `https://www.google.com/search?tbm=isch&q=${currentWinner.name} Restaurant Food`;
+                document.getElementById('menu-btn').href = `https://www.google.com/search?q=${encodeURIComponent(currentWinner.name + ' Menu')}`;
 
                 document.getElementById('winner-name').innerText = currentWinner.name;
                 document.getElementById('winner-rating').innerText = "⭐".repeat(Math.floor(currentWinner.rating));
                 document.getElementById('winner-details').innerText = `${currentWinner.type} • ${currentWinner.dist} MILES`;
                 document.getElementById('maps-link').href = `http://googleusercontent.com/maps.google.com/?q=${currentWinner.lat},${currentWinner.lon}`;
-                document.getElementById('menu-btn').href = `https://www.google.com/search?q=${encodeURIComponent(currentWinner.name + ' Menu')}`;
                 
                 const w = document.getElementById('website-link');
                 if(currentWinner.website) { w.href = currentWinner.website; w.classList.remove('hidden'); } else { w.classList.add('hidden'); }
@@ -330,13 +459,13 @@
             const grid = document.getElementById('names-grid');
             if(grid.children.length < 10) {
                 const i = document.createElement('input');
-                i.className = "payer-input p-2 border rounded-lg text-xs font-bold bg-white";
+                i.className = "payer-input p-2 text-sm border-2 border-black rounded-lg font-bold bg-white";
                 i.placeholder = `Name ${grid.children.length + 1}`;
                 grid.appendChild(i);
             }
         }
         function clearNames() { 
-            document.getElementById('names-grid').innerHTML = `<input type="text" class="payer-input p-2 border rounded-lg text-xs font-bold bg-white" placeholder="Name 1"><input type="text" class="payer-input p-2 border rounded-lg text-xs font-bold bg-white" placeholder="Name 2">`;
+            document.getElementById('names-grid').innerHTML = `<input type="text" class="payer-input p-2 text-sm" placeholder="Name 1"><input type="text" class="payer-input p-2 text-sm" placeholder="Name 2">`;
             document.getElementById('payer-result-box').classList.add('hidden');
         }
 
@@ -353,14 +482,14 @@
 
         function renderHistory() { 
             const list = document.getElementById('history-list');
-            if(history.length === 0) { list.innerHTML = "<p class='text-center text-xs text-gray-400'>No history yet!</p>"; return; }
+            if(history.length === 0) { list.innerHTML = "<p class='text-center text-xs text-gray-400 font-bold'>No history yet!</p>"; return; }
             list.innerHTML = history.map(h => `
-                <div class="p-3 bg-white/50 border rounded-xl flex justify-between items-center">
+                <div class="p-3 bg-white border-2 border-black rounded-xl flex justify-between items-center shadow-[2px_2px_0_black]">
                     <div>
-                        <h4 class="font-black text-[10px] truncate w-32">${h.name}</h4>
-                        <p class="text-[8px] text-orange-500 font-bold">⭐ ${h.rating || '--'} • ${h.time}</p>
+                        <h4 class="font-black text-[11px] truncate w-32">${h.name}</h4>
+                        <p class="text-[9px] text-orange-500 font-bold">⭐ ${h.rating || '--'} • ${h.time}</p>
                     </div>
-                    <a href="https://www.google.com/search?q=${encodeURIComponent(h.name + ' Menu')}" target="_blank" class="text-[9px] bg-gray-200 px-2 py-1 rounded font-bold text-gray-600">📖 Menu</a>
+                    <a href="https://www.google.com/search?q=${encodeURIComponent(h.name + ' Menu')}" target="_blank" class="text-[9px] bg-yellow-200 border border-black px-2 py-1 rounded font-black hover:bg-yellow-300 uppercase">📖 Menu</a>
                 </div>`).join('');
         }
 
