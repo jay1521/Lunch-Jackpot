@@ -203,7 +203,7 @@
             });
         }
 
-        // --- FETCH LOGIC WITH ROBUST GPS ---
+        // --- ROBUST SEARCH LOGIC ---
         document.getElementById('search-btn').onclick = async () => {
             const loader = document.getElementById('loader');
             loader.classList.remove('hidden');
@@ -213,16 +213,26 @@
                 if (zip) {
                     const r = await fetch(`https://nominatim.openstreetmap.org/search?postalcode=${zip}&country=US&format=json`);
                     const d = await r.json();
-                    if(d.length === 0) throw new Error("Zip not found");
+                    if(d.length === 0) throw new Error("Zip code not found. Please try another.");
                     lat = parseFloat(d[0].lat); lon = parseFloat(d[0].lon);
                 } else {
-                    // ROBUST GPS: Low accuracy fallback allowed
+                    // ROBUST GEOLOCATION
                     const pos = await new Promise((resolve, reject) => {
-                        navigator.geolocation.getCurrentPosition(resolve, reject, {
-                            enableHighAccuracy: false, // Better for indoors/fast results
-                            timeout: 10000,
-                            maximumAge: 60000
-                        });
+                        if (!navigator.geolocation) {
+                            reject(new Error("Geolocation not supported by this browser."));
+                        } else {
+                            navigator.geolocation.getCurrentPosition(resolve, (err) => {
+                                // Specific error messages
+                                if(err.code === 1) reject(new Error("Permission Denied: Please allow location access in your browser settings."));
+                                else if(err.code === 2) reject(new Error("Position Unavailable: GPS signal lost."));
+                                else if(err.code === 3) reject(new Error("Timeout: GPS took too long. Try a Zip code."));
+                                else reject(err);
+                            }, {
+                                enableHighAccuracy: false, // Set to false for better compatibility
+                                timeout: 15000,
+                                maximumAge: 60000
+                            });
+                        }
                     });
                     lat = pos.coords.latitude; lon = pos.coords.longitude;
                 }
@@ -253,7 +263,7 @@
                 document.getElementById('location-status').innerText = `${restaurants.length} Places Found`;
             } catch(e) { 
                 console.error(e);
-                alert("Location Error: Please ensure you are using HTTPS or try entering a Zip Code."); 
+                alert("Location Error: " + e.message + "\n\nTip: Try entering a Zip Code if GPS fails."); 
                 loader.classList.add('hidden'); 
             }
         };
