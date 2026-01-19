@@ -3,7 +3,7 @@
 <head>
     <meta charset="UTF-8">
     <meta name="viewport" content="width=device-width, initial-scale=1.0, maximum-scale=1.0, user-scalable=no">
-    <title>Lunch Jackpot Ultimate</title>
+    <title>Bite Roulette</title>
     <script src="https://cdn.tailwindcss.com"></script>
     <link rel="stylesheet" href="https://unpkg.com/leaflet@1.9.4/dist/leaflet.css" />
     <script src="https://unpkg.com/leaflet@1.9.4/dist/leaflet.js"></script>
@@ -17,7 +17,7 @@
             --accent-red: #FF5252;
             --accent-blue: #4FC3F7;
             --accent-green: #81C784;
-            --accent-purple: #BA68C8; /* New for 21+ */
+            --accent-purple: #BA68C8;
             --border-color: #1a1a1a;
         }
 
@@ -58,31 +58,24 @@
             box-shadow: 3px 3px 0px 0px #000;
             transform: translateY(-2px);
         }
-        /* Purple active state for 21+ tab */
         #tab-bar.active { background: var(--accent-purple); }
 
         .roulette-window { 
-            height: 100px; 
-            overflow: hidden; 
-            position: relative; 
-            border-radius: 16px; 
-            background: #fff; 
+            height: 100px; overflow: hidden; position: relative; 
+            border-radius: 16px; background: #fff; 
             border: 4px solid var(--border-color);
             box-shadow: inset 0 0 10px rgba(0,0,0,0.1);
         }
         .roulette-window::after {
-            content: "▼";
-            position: absolute;
-            top: -5px; left: 50%; transform: translateX(-50%);
-            color: var(--accent-red); font-size: 24px; z-index: 10;
-            text-shadow: 2px 2px 0 #000;
+            content: "▼"; position: absolute; top: -5px; left: 50%; transform: translateX(-50%);
+            color: var(--accent-red); font-size: 24px; z-index: 10; text-shadow: 2px 2px 0 #000;
         }
 
         .roulette-belt { display: flex; flex-direction: column; align-items: center; transform: translateY(0); }
         .roulette-item { 
             height: 100px; display: flex; align-items: center; justify-content: center; 
-            font-family: 'Titan One', cursive; font-size: 1.4rem; color: #333; text-align: center; 
-            padding: 0 10px; width: 100%; background-color: #fff;
+            font-family: 'Titan One', cursive; font-size: 1.4rem; color: #333; 
+            text-align: center; padding: 0 10px; width: 100%; background-color: #fff;
         }
         .roulette-item:nth-child(odd) { background-color: #E1F5FE; }
         .roulette-item:nth-child(even) { background-color: #FFF3E0; }
@@ -103,7 +96,7 @@
 <body class="min-h-screen pb-32">
 
     <header class="w-full max-w-md mx-auto p-6 text-center">
-        <h1 class="text-4xl cartoon-title mb-2">JACKPOT<br>APP</h1>
+        <h1 class="text-4xl cartoon-title mb-2">BITE<br>ROULETTE</h1>
         <div class="inline-block bg-white border-2 border-black rounded-full px-4 py-1 shadow-[2px_2px_0px_0px_rgba(0,0,0,1)]">
             <div class="flex items-center gap-2">
                 <div id="loader" class="loader hidden w-3 h-3 border-2 border-black border-t-transparent rounded-full animate-spin"></div>
@@ -113,18 +106,18 @@
     </header>
 
     <nav class="fixed bottom-6 left-1/2 -translate-x-1/2 w-[95%] max-w-md bg-white border-4 border-black rounded-2xl p-1 flex justify-between items-center z-[1000] shadow-[6px_6px_0px_0px_rgba(0,0,0,1)] overflow-x-auto">
-        <button onclick="switchTab('jackpot')" id="tab-jackpot" class="tab-btn active flex-1 py-3 px-1 text-[9px] font-black uppercase whitespace-nowrap">🍔 Food</button>
-        <button onclick="switchTab('bar')" id="tab-bar" class="tab-btn flex-1 py-3 px-1 text-[9px] font-black uppercase whitespace-nowrap">🍸 21+</button>
-        <button onclick="switchTab('map')" id="tab-map" class="tab-btn flex-1 py-3 px-1 text-[9px] font-black uppercase whitespace-nowrap">🗺️ Map</button>
-        <button onclick="switchTab('bill')" id="tab-bill" class="tab-btn flex-1 py-3 px-1 text-[9px] font-black uppercase whitespace-nowrap">💸 Bill</button>
-        <button onclick="switchTab('history')" id="tab-history" class="tab-btn flex-1 py-3 px-1 text-[9px] font-black uppercase whitespace-nowrap">📜 Wins</button>
+        <button onclick="switchTab('jackpot')" id="tab-jackpot" class="tab-btn active flex-1 py-3 px-2 text-[9px] font-black uppercase whitespace-nowrap">🍔 Dine & Dice</button>
+        <button onclick="switchTab('bar')" id="tab-bar" class="tab-btn flex-1 py-3 px-2 text-[9px] font-black uppercase whitespace-nowrap">🍸 All Bets Are Off (21+)</button>
+        <button onclick="switchTab('map')" id="tab-map" class="tab-btn flex-1 py-3 px-2 text-[9px] font-black uppercase whitespace-nowrap">🗺️ Map</button>
+        <button onclick="switchTab('bill')" id="tab-bill" class="tab-btn flex-1 py-3 px-2 text-[9px] font-black uppercase whitespace-nowrap">💸 Tab Roulette</button>
+        <button onclick="switchTab('history')" id="tab-history" class="tab-btn flex-1 py-3 px-2 text-[9px] font-black uppercase whitespace-nowrap">📜 Chicken Dinner</button>
     </nav>
 
     <main class="w-full max-w-md mx-auto px-4">
         
         <div id="view-jackpot" class="tab-view flex flex-col gap-4">
             <div class="cartoon-card p-4">
-                <h3 class="text-xs font-black uppercase mb-2 text-center text-blue-400">🍔 Find Food</h3>
+                <h3 class="text-xs font-black uppercase mb-2 text-center text-blue-400">🍔 Dine & Dice</h3>
                 <div class="grid grid-cols-2 gap-3 mb-3">
                     <input type="text" id="food-zip" placeholder="Zip Code" class="p-2 w-full text-sm">
                     <select id="food-dist" class="p-2 w-full text-sm">
@@ -155,13 +148,13 @@
                         <span class="text-xs font-black uppercase">Open Now Only</span>
                     </label>
                 </div>
-                <button onclick="runSearch('food')" class="w-full py-3 text-sm tracking-wider bg-blue-400 text-white border-3 border-black rounded-full shadow-[4px_4px_0_black] uppercase">Update Food List</button>
+                <button onclick="runSearch('food')" class="w-full py-3 text-sm tracking-wider bg-blue-400 text-white border-3 border-black rounded-full shadow-[4px_4px_0_black] uppercase">Update List</button>
             </div>
 
             <div id="roulette-food" class="hidden my-4"><div class="roulette-window"><div id="belt-food" class="roulette-belt"></div></div></div>
             
             <div id="result-food" class="hidden cartoon-card p-4 text-center border-yellow-400 bg-yellow-50">
-                <p class="text-[10px] font-black text-yellow-600 uppercase tracking-widest mb-1">🎉 WINNER 🎉</p>
+                <p class="text-[10px] font-black text-yellow-600 uppercase tracking-widest mb-1">🎉 WINNER WINNER 🎉</p>
                 <h2 id="name-food" class="text-2xl font-black text-gray-900 leading-none mb-2 mt-2" style="font-family: 'Titan One';">--</h2>
                 <div id="rating-food" class="text-orange-500 font-bold text-sm mb-2"></div>
                 <p id="details-food" class="text-gray-600 text-xs font-black mb-4 uppercase tracking-widest">--</p>
@@ -172,7 +165,7 @@
                 </div>
             </div>
 
-            <button id="spin-food" disabled class="w-full py-5 text-xl tracking-widest mb-4 bg-red-500 text-white border-3 border-black rounded-full shadow-[4px_4px_0_black] font-black uppercase">SPIN FOR LUNCH!</button>
+            <button id="spin-food" disabled class="w-full py-5 text-xl tracking-widest mb-4 bg-red-500 text-white border-3 border-black rounded-full shadow-[4px_4px_0_black] font-black uppercase">ROLL THE DICE!</button>
 
             <div class="cartoon-card p-4">
                 <h3 class="text-xs font-black uppercase mb-3 text-gray-400">👇 Candidates</h3>
@@ -182,7 +175,7 @@
 
         <div id="view-bar" class="tab-view hidden flex flex-col gap-4">
             <div class="cartoon-card p-4 border-purple-900">
-                <h3 class="text-xs font-black uppercase mb-2 text-center text-purple-600">🍸 Find Drinks (21+)</h3>
+                <h3 class="text-xs font-black uppercase mb-2 text-center text-purple-600">🍸 All Bets Are Off (21+)</h3>
                 <div class="grid grid-cols-2 gap-3 mb-3">
                     <input type="text" id="bar-zip" placeholder="Zip Code" class="p-2 w-full text-sm">
                     <select id="bar-dist" class="p-2 w-full text-sm">
@@ -249,7 +242,7 @@
 
         <div id="view-bill" class="tab-view hidden flex flex-col gap-4">
             <div class="cartoon-card p-5">
-                <h3 class="text-sm font-black text-center mb-4 uppercase border-b-2 border-gray-100 pb-2">🧮 Split the Bill</h3>
+                <h3 class="text-sm font-black text-center mb-4 uppercase border-b-2 border-gray-100 pb-2">💸 Tab Roulette</h3>
                 <div class="grid grid-cols-3 gap-2 mb-4">
                     <div><label class="text-[9px] font-black uppercase ml-1">Total $</label><input type="number" id="bill-total" class="w-full p-2 text-sm"></div>
                     <div><label class="text-[9px] font-black uppercase ml-1">Tip %</label><select id="tip-percent" class="w-full p-2 text-sm"><option value="0.18">18%</option><option value="0.20">20%</option><option value="0.25">25%</option></select></div>
@@ -276,7 +269,7 @@
 
         <div id="view-history" class="tab-view hidden flex flex-col gap-4">
             <div class="cartoon-card p-5 min-h-[400px]">
-                <h3 class="text-sm font-black text-center mb-4 uppercase border-b-2 border-gray-100 pb-2">🏆 Win History</h3>
+                <h3 class="text-sm font-black text-center mb-4 uppercase border-b-2 border-gray-100 pb-2">📜 Chicken Dinner</h3>
                 <div id="history-list" class="flex flex-col gap-3"></div>
             </div>
         </div>
@@ -285,7 +278,7 @@
     <script>
         // Global State
         let currentMode = 'food'; // 'food' or 'bar'
-        let restaurants = []; // Holds current list (either food or bar)
+        let restaurants = []; // Holds current list
         let favs = JSON.parse(localStorage.getItem('jpot_favs') || '[]');
         let history = JSON.parse(localStorage.getItem('jpot_hist') || '[]');
         let lat, lon, currentWinner, map, userMarker, restaurantMarkers = [];
@@ -296,7 +289,6 @@
             document.getElementById('view-' + id).classList.remove('hidden');
             document.getElementById('tab-' + id).classList.add('active');
             
-            // Map handling
             if(id === 'map') setTimeout(() => { if(map) map.invalidateSize(); else initMap(); }, 100);
             if(id === 'history') renderHistory();
         }
@@ -323,15 +315,12 @@
 
         // --- SEARCH ENGINE ---
         async function runSearch(mode) {
-            currentMode = mode; // Update global mode
+            currentMode = mode;
             const loader = document.getElementById('loader');
             loader.classList.remove('hidden');
-            
-            // Get Inputs based on mode
             const zip = document.getElementById(mode + '-zip').value.trim();
             
             try {
-                // 1. Geolocation
                 if (zip) {
                     const r = await fetch(`https://nominatim.openstreetmap.org/search?postalcode=${zip}&country=US&format=json`);
                     const d = await r.json();
@@ -339,16 +328,24 @@
                     lat = parseFloat(d[0].lat); lon = parseFloat(d[0].lon);
                 } else {
                     const pos = await new Promise((resolve, reject) => {
+                        if (!navigator.geolocation) {
+                            reject(new Error("Geolocation not supported."));
+                            return;
+                        }
                         navigator.geolocation.getCurrentPosition(resolve, (err) => {
-                            if(err.code === 1) reject(new Error("Permission Denied: Allow location."));
-                            else if(err.code === 3) reject(new Error("Timeout: Try Zip Code."));
-                            else reject(err);
-                        }, { enableHighAccuracy: false, timeout: 15000, maximumAge: 60000 });
+                            const msg = err.message || "";
+                            if (msg.includes("string did not match") || err.code === 2) {
+                                reject(new Error("Weak GPS signal. Try Zip Code."));
+                            } else if (err.code === 1) {
+                                reject(new Error("Permission Denied. Allow Location."));
+                            } else {
+                                reject(new Error("GPS Error. Try Zip Code."));
+                            }
+                        }, { enableHighAccuracy: false, timeout: 10000, maximumAge: 60000 });
                     });
                     lat = pos.coords.latitude; lon = pos.coords.longitude;
                 }
 
-                // 2. Build Query
                 const radius = document.getElementById(mode + '-dist').value;
                 let query = "";
                 
@@ -357,8 +354,7 @@
                     const filter = cuisine !== 'restaurant' ? `["cuisine"~"${cuisine}"]` : '';
                     query = `[out:json];(node["amenity"~"restaurant|fast_food"]${filter}(around:${radius},${lat},${lon}););out 30;`;
                 } else {
-                    // Bar Mode
-                    const vibe = document.getElementById('bar-vibe').value; // pub, nightclub, etc
+                    const vibe = document.getElementById('bar-vibe').value; 
                     const filter = vibe !== 'bar' ? `["amenity"="${vibe}"]` : '["amenity"~"bar|pub|nightclub|lounge|biergarten"]';
                     query = `[out:json];(node${filter}(around:${radius},${lat},${lon}););out 30;`;
                 }
@@ -369,7 +365,6 @@
                 restaurants = data.elements.filter(e => e.tags.name).map(e => ({
                     id: e.id.toString(),
                     name: e.tags.name,
-                    cuisine: (e.tags.cuisine || 'food').split(';')[0].toLowerCase(),
                     type: (e.tags.amenity || 'Place').replace('_', ' ').toUpperCase(),
                     rating: e.tags.rating || (Math.random() * 1.2 + 3.8).toFixed(1),
                     lat: e.lat, lon: e.lon,
@@ -377,7 +372,6 @@
                     dist: calcDist(lat, lon, e.lat, e.lon)
                 }));
 
-                // 3. Render
                 renderList(mode);
                 if(map) updateMapMarkers();
                 document.getElementById('spin-' + mode).disabled = false;
@@ -386,7 +380,7 @@
 
             } catch(e) { 
                 console.error(e);
-                alert("Location Error: " + e.message + "\n\nTip: Try entering a Zip Code if GPS fails."); 
+                alert("Location Error: " + e.message); 
                 loader.classList.add('hidden'); 
             }
         }
@@ -411,7 +405,6 @@
                 </div>`).join('');
         }
 
-        // --- SPIN LOGIC (Generic for both) ---
         function setupSpin(mode) {
             document.getElementById('spin-' + mode).onclick = () => {
                 const pool = [];
@@ -446,7 +439,6 @@
                 }, {once: true});
             };
             
-            // Share Button Logic
             document.getElementById('share-' + mode).onclick = async () => {
                 if(currentWinner && navigator.share) await navigator.share({ title: 'Jackpot Winner', text: `Let's go to: ${currentWinner.name}`, url: `http://googleusercontent.com/maps.google.com/?q=${currentWinner.lat},${currentWinner.lon}` });
             };
@@ -454,7 +446,6 @@
         setupSpin('food');
         setupSpin('bar');
 
-        // --- BILL & PAYER ---
         function updateSplit() {
             const t = parseFloat(document.getElementById('bill-total').value)||0, tp = parseFloat(document.getElementById('tip-percent').value), n = parseInt(document.getElementById('people-count').value)||0;
             if(t>0&&n>0) document.getElementById('split-result').innerText = `TOTAL: $${(t*(1+tp)).toFixed(2)} | $${(t*(1+tp)/n).toFixed(2)} EACH`;
@@ -483,7 +474,6 @@
             document.getElementById('payer-result-box').classList.add('hidden');
         }
 
-        // --- UTILS ---
         function saveToHist(p) { 
             history.unshift({ name: p.name, rating: p.rating, time: new Date().toLocaleTimeString([], {hour:'2-digit', minute:'2-digit'}) }); 
             if(history.length>20) history.pop(); 
@@ -501,10 +491,8 @@
         }
 
         function toggleFav(id) { 
-            const i = favs.indexOf(id); 
-            if(i>-1) favs.splice(i,1); else favs.push(id); 
+            const i = favs.indexOf(id); if(i>-1) favs.splice(i,1); else favs.push(id); 
             localStorage.setItem('jpot_favs', JSON.stringify(favs)); 
-            // Refresh current list if possible
             if(restaurants.length > 0) renderList(currentMode); 
         }
         
