@@ -10,7 +10,6 @@
     <link href="https://fonts.googleapis.com/css2?family=Titan+One&family=Nunito:wght@400;700;900&display=swap" rel="stylesheet">
     
     <style>
-        /* CARTOON THEME */
         :root {
             --bg-cream: #FFF8E1;
             --accent-orange: #FF8A65;
@@ -80,10 +79,9 @@
         .roulette-item:nth-child(odd) { background-color: #E1F5FE; }
         .roulette-item:nth-child(even) { background-color: #FFF3E0; }
 
-        .spinning { animation: slideUp 4s cubic-bezier(0.1, 1, 0.2, 1) forwards; }
+        /* --- UPDATED SPIN DURATION TO 6s --- */
+        .spinning { animation: slideUp 6s cubic-bezier(0.1, 1, 0.2, 1) forwards; }
         @keyframes slideUp { 0% { transform: translateY(0); } 100% { transform: translateY(var(--scroll-distance)); } }
-        .pop-in { animation: pop 0.4s cubic-bezier(0.34, 1.56, 0.64, 1) forwards; }
-        @keyframes pop { 0% { transform: scale(0.9); opacity: 0; } 100% { transform: scale(1); opacity: 1; } }
         
         .user-location-dot { width: 16px; height: 16px; background-color: var(--accent-blue); border: 3px solid white; border-radius: 50%; box-shadow: 0 0 0 2px black; position: relative; }
         #map-container { height: 400px; width: 100%; border-radius: 12px; border: 3px solid var(--border-color); overflow: hidden; }
@@ -93,7 +91,7 @@
         .cartoon-title { color: var(--accent-orange); -webkit-text-stroke: 1.5px black; text-shadow: 3px 3px 0px #000; }
     </style>
 </head>
-<body class="min-h-screen pb-32">
+<body class="min-h-screen pb-40">
 
     <header class="w-full max-w-md mx-auto p-6 text-center">
         <h1 class="text-4xl cartoon-title mb-2">BITE<br>ROULETTE</h1>
@@ -105,12 +103,15 @@
         </div>
     </header>
 
-    <nav class="fixed bottom-6 left-1/2 -translate-x-1/2 w-[95%] max-w-md bg-white border-4 border-black rounded-2xl p-1 flex justify-between items-center z-[1000] shadow-[6px_6px_0px_0px_rgba(0,0,0,1)] overflow-x-auto">
-        <button onclick="switchTab('jackpot')" id="tab-jackpot" class="tab-btn active flex-1 py-3 px-2 text-[9px] font-black uppercase whitespace-nowrap">🍔 Dine & Dice</button>
-        <button onclick="switchTab('bar')" id="tab-bar" class="tab-btn flex-1 py-3 px-2 text-[9px] font-black uppercase whitespace-nowrap">🍸 All Bets Are Off (21+)</button>
-        <button onclick="switchTab('map')" id="tab-map" class="tab-btn flex-1 py-3 px-2 text-[9px] font-black uppercase whitespace-nowrap">🗺️ Map</button>
-        <button onclick="switchTab('bill')" id="tab-bill" class="tab-btn flex-1 py-3 px-2 text-[9px] font-black uppercase whitespace-nowrap">💸 Tab Roulette</button>
-        <button onclick="switchTab('history')" id="tab-history" class="tab-btn flex-1 py-3 px-2 text-[9px] font-black uppercase whitespace-nowrap">📜 Chicken Dinner</button>
+    <nav class="fixed bottom-4 left-1/2 -translate-x-1/2 w-[95%] max-w-md bg-white border-4 border-black rounded-2xl p-2 z-[1000] shadow-[6px_6px_0px_0px_rgba(0,0,0,1)]">
+        <div class="flex flex-wrap justify-center gap-1">
+            <button onclick="switchTab('jackpot')" id="tab-jackpot" class="tab-btn active flex-grow w-[30%] py-2 text-[8px] font-black uppercase">🍔 Dine & Dice</button>
+            <button onclick="switchTab('bar')" id="tab-bar" class="tab-btn flex-grow w-[30%] py-2 text-[8px] font-black uppercase">🍸 21+ (Bets Off)</button>
+            <button onclick="switchTab('map')" id="tab-map" class="tab-btn flex-grow w-[30%] py-2 text-[8px] font-black uppercase">🗺️ Map</button>
+            
+            <button onclick="switchTab('bill')" id="tab-bill" class="tab-btn flex-grow w-[45%] py-2 text-[8px] font-black uppercase">💸 Tab Roulette</button>
+            <button onclick="switchTab('history')" id="tab-history" class="tab-btn flex-grow w-[45%] py-2 text-[8px] font-black uppercase">📜 Chicken Dinner</button>
+        </div>
     </nav>
 
     <main class="w-full max-w-md mx-auto px-4">
@@ -277,8 +278,8 @@
 
     <script>
         // Global State
-        let currentMode = 'food'; // 'food' or 'bar'
-        let restaurants = []; // Holds current list
+        let currentMode = 'food';
+        let restaurants = [];
         let favs = JSON.parse(localStorage.getItem('jpot_favs') || '[]');
         let history = JSON.parse(localStorage.getItem('jpot_hist') || '[]');
         let lat, lon, currentWinner, map, userMarker, restaurantMarkers = [];
@@ -313,7 +314,7 @@
             });
         }
 
-        // --- SEARCH ENGINE ---
+        // --- SEARCH ENGINE WITH IOS FIX ---
         async function runSearch(mode) {
             currentMode = mode;
             const loader = document.getElementById('loader');
@@ -327,23 +328,19 @@
                     if(d.length === 0) throw new Error("Zip code not found.");
                     lat = parseFloat(d[0].lat); lon = parseFloat(d[0].lon);
                 } else {
-                    const pos = await new Promise((resolve, reject) => {
-                        if (!navigator.geolocation) {
-                            reject(new Error("Geolocation not supported."));
-                            return;
-                        }
-                        navigator.geolocation.getCurrentPosition(resolve, (err) => {
-                            const msg = err.message || "";
-                            if (msg.includes("string did not match") || err.code === 2) {
-                                reject(new Error("Weak GPS signal. Try Zip Code."));
-                            } else if (err.code === 1) {
-                                reject(new Error("Permission Denied. Allow Location."));
-                            } else {
-                                reject(new Error("GPS Error. Try Zip Code."));
-                            }
-                        }, { enableHighAccuracy: false, timeout: 10000, maximumAge: 60000 });
-                    });
-                    lat = pos.coords.latitude; lon = pos.coords.longitude;
+                    // FIX: Retry mechanism for iOS
+                    const getPos = (opts) => new Promise((resolve, reject) => navigator.geolocation.getCurrentPosition(resolve, reject, opts));
+                    
+                    try {
+                        // Attempt 1: High Accuracy
+                        const pos = await getPos({ enableHighAccuracy: true, timeout: 5000, maximumAge: 0 });
+                        lat = pos.coords.latitude; lon = pos.coords.longitude;
+                    } catch (err) {
+                        // Attempt 2: Low Accuracy / Cached (Fixes 'string pattern' error)
+                        console.log("High accuracy failed, trying low accuracy...");
+                        const pos = await getPos({ enableHighAccuracy: false, timeout: 10000, maximumAge: 60000 });
+                        lat = pos.coords.latitude; lon = pos.coords.longitude;
+                    }
                 }
 
                 const radius = document.getElementById(mode + '-dist').value;
@@ -380,7 +377,7 @@
 
             } catch(e) { 
                 console.error(e);
-                alert("Location Error: " + e.message); 
+                alert("Location Error: Please ensure GPS is allowed. If this persists, enter a Zip Code."); 
                 loader.classList.add('hidden'); 
             }
         }
@@ -405,6 +402,7 @@
                 </div>`).join('');
         }
 
+        // --- SPIN LOGIC ---
         function setupSpin(mode) {
             document.getElementById('spin-' + mode).onclick = () => {
                 const pool = [];
@@ -413,6 +411,8 @@
                 
                 const area = document.getElementById('roulette-' + mode);
                 const belt = document.getElementById('belt-' + mode);
+                const btn = document.getElementById('spin-' + mode);
+                
                 area.classList.remove('hidden');
                 document.getElementById('result-' + mode).classList.add('hidden');
                 
@@ -435,6 +435,10 @@
                     document.getElementById('menu-' + mode).href = `https://www.google.com/search?q=${encodeURIComponent(currentWinner.name + ' Menu')}`;
                     
                     document.getElementById('result-' + mode).classList.remove('hidden');
+                    
+                    // UPDATE BUTTON TEXT
+                    btn.innerText = "ROLL AGAIN";
+                    
                     saveToHist(currentWinner);
                 }, {once: true});
             };
