@@ -92,6 +92,10 @@
             z-index: 20;
             filter: drop-shadow(2px 2px 0px rgba(0,0,0,0.5));
             pointer-events: none;
+            display: flex;
+            align-items: center;
+            justify-content: center;
+            font-size: 50px;
         }
 
         .wheel-center-nut {
@@ -117,6 +121,10 @@
         .hours-content { max-height: 0; overflow: hidden; transition: max-height 0.3s ease-out; }
         .hours-row.active .hours-content { max-height: 120px; overflow-y: auto; }
         .cartoon-title { color: var(--accent-orange); -webkit-text-stroke: 1.5px black; text-shadow: 3px 3px 0px #000; }
+        
+        /* Animations */
+        .pop-in { animation: popIn 0.5s cubic-bezier(0.175, 0.885, 0.32, 1.275); }
+        @keyframes popIn { 0% { transform: scale(0); opacity: 0; } 100% { transform: scale(1); opacity: 1; } }
     </style>
 </head>
 <body class="min-h-screen pb-44">
@@ -154,15 +162,27 @@
                     <p class="text-[9px] text-gray-400 text-center mt-1 font-bold uppercase">Leave empty to use categories below</p>
                 </div>
 
+                <div class="flex gap-2 mb-3">
+                    <input type="text" id="food-zip" placeholder="Zip Code" class="p-2 w-1/2 text-sm">
+                    <button onclick="triggerGeolocation()" class="w-1/2 bg-gray-100 border-2 border-black rounded-lg text-[10px] font-black uppercase hover:bg-white active:bg-gray-200">
+                        📍 Use My Location
+                    </button>
+                </div>
+
                 <div class="grid grid-cols-2 gap-3 mb-3">
-                    <input type="text" id="food-zip" placeholder="Zip Code" class="p-2 w-full text-sm">
                     <select id="food-dist" class="p-2 w-full text-sm">
                         <option value="1609">1 Mile</option>
                         <option value="4828" selected>3 Miles</option>
                         <option value="8046">5 Miles</option>
                     </select>
+                    <select id="food-budget" class="p-2 w-full text-sm">
+                        <option value="4">Any Price</option>
+                        <option value="1">$ Cheap</option>
+                        <option value="2">$$ Mid</option>
+                    </select>
                 </div>
-                <div class="grid grid-cols-2 gap-3 mb-3">
+
+                <div class="grid grid-cols-1 mb-3">
                     <select id="food-cuisine" class="p-2 w-full text-sm">
                         <option value="restaurant">🎡 All Food</option>
                         <option value="healthy">🥗 Healthy</option>
@@ -174,28 +194,15 @@
                         <option value="italian">🍝 Italian</option>
                         <option value="breakfast">🥞 Breakfast</option>
                     </select>
-                    <select id="food-budget" class="p-2 w-full text-sm">
-                        <option value="4">Any Price</option>
-                        <option value="1">$ Cheap</option>
-                        <option value="2">$$ Mid</option>
-                    </select>
                 </div>
+
                 <button onclick="runSearch('food')" class="w-full py-3 text-sm tracking-wider bg-blue-400 text-white border-3 border-black rounded-full shadow-[4px_4px_0_black] uppercase">Update List</button>
             </div>
 
             <div id="roulette-food-area" class="hidden mb-4 px-4">
                 <div class="wheel-container">
                     <canvas id="wheel-canvas-food"></canvas>
-                    <svg class="wheel-pointer" viewBox="0 0 100 100" style="overflow: visible;">
-                        <g transform="translate(50, 45)">
-                            <path d="M70,-20 L30,40" stroke="#FF5252" stroke-width="8" stroke-linecap="round"/>
-                            <path d="M30,40 L25,48" stroke="#1a1a1a" stroke-width="8" stroke-linecap="round"/>
-                            <path d="M30,-20 L70,40" stroke="#FF5252" stroke-width="8" stroke-linecap="round"/>
-                            <path d="M70,40 L75,48" stroke="#1a1a1a" stroke-width="8" stroke-linecap="round"/>
-                            <path d="M25,-25 L35,-15 M28,-28 L38,-18 M31,-31 L41,-21" stroke="#1a1a1a" stroke-width="2"/>
-                            <path d="M70,-20 L30,40 M30,-20 L70,40" stroke="black" stroke-width="2" fill="none"/>
-                        </g>
-                    </svg>
+                    <div class="wheel-pointer" style="top: -30px;">🍽️</div>
                     <div class="wheel-center-nut"><div class="w-2 h-2 bg-black rounded-full opacity-20"></div></div>
                 </div>
             </div>
@@ -227,26 +234,32 @@
                     <input type="text" id="bar-custom" placeholder="Specific Drink (e.g. Margarita, Craft Beer)" class="p-2 w-full text-sm border-dashed border-gray-400">
                 </div>
 
+                 <div class="flex gap-2 mb-3">
+                    <input type="text" id="bar-zip" placeholder="Zip Code" class="p-2 w-1/2 text-sm">
+                    <button onclick="triggerGeolocation()" class="w-1/2 bg-gray-100 border-2 border-black rounded-lg text-[10px] font-black uppercase hover:bg-white active:bg-gray-200">
+                        📍 Use My Location
+                    </button>
+                </div>
+
                 <div class="grid grid-cols-2 gap-3 mb-3">
-                    <input type="text" id="bar-zip" placeholder="Zip Code" class="p-2 w-full text-sm">
                     <select id="bar-dist" class="p-2 w-full text-sm">
                         <option value="1609">1 Mile</option>
                         <option value="4828" selected>3 Miles</option>
                         <option value="8046">5 Miles</option>
                     </select>
+                    <select id="bar-budget" class="p-2 w-full text-sm">
+                        <option value="4">Any Price</option>
+                        <option value="1">$ Cheap</option>
+                        <option value="2">$$ Mid</option>
+                    </select>
                 </div>
-                <div class="grid grid-cols-2 gap-3 mb-3">
+                <div class="grid grid-cols-1 mb-3">
                     <select id="bar-vibe" class="p-2 w-full text-sm">
                         <option value="bar">🍻 All Bars</option>
                         <option value="pub">🍺 Pubs</option>
                         <option value="nightclub">🕺 Clubs</option>
                         <option value="lounge">🍸 Lounge</option>
                         <option value="dive">🎱 Dive Bar</option>
-                    </select>
-                    <select id="bar-budget" class="p-2 w-full text-sm">
-                        <option value="4">Any Price</option>
-                        <option value="1">$ Cheap</option>
-                        <option value="2">$$ Mid</option>
                     </select>
                 </div>
                 <button onclick="runSearch('bar')" class="w-full py-3 text-sm tracking-wider bg-purple-400 text-white border-3 border-black rounded-full shadow-[4px_4px_0_black] uppercase">Update Bar List</button>
@@ -295,15 +308,25 @@
                     <input type="text" id="coffee-custom" placeholder="Cravings (e.g. Matcha, Donuts, Boba)" class="p-2 w-full text-sm border-dashed border-gray-400">
                 </div>
 
+                <div class="flex gap-2 mb-3">
+                    <input type="text" id="coffee-zip" placeholder="Zip Code" class="p-2 w-1/2 text-sm">
+                    <button onclick="triggerGeolocation()" class="w-1/2 bg-gray-100 border-2 border-black rounded-lg text-[10px] font-black uppercase hover:bg-white active:bg-gray-200">
+                        📍 Use My Location
+                    </button>
+                </div>
+
                 <div class="grid grid-cols-2 gap-3 mb-3">
-                    <input type="text" id="coffee-zip" placeholder="Zip Code" class="p-2 w-full text-sm">
                     <select id="coffee-dist" class="p-2 w-full text-sm">
                         <option value="1609">1 Mile</option>
                         <option value="4828" selected>3 Miles</option>
                         <option value="8046">5 Miles</option>
                     </select>
+                    <label class="flex items-center gap-2 justify-center bg-gray-100 border-2 border-black px-2 py-2 rounded-lg cursor-pointer w-full">
+                        <input type="checkbox" id="coffee-open" class="w-4 h-4 accent-amber-500 rounded border-2 border-black">
+                        <span class="text-[10px] font-black uppercase">Open Now</span>
+                    </label>
                 </div>
-                <div class="grid grid-cols-2 gap-3 mb-3">
+                <div class="grid grid-cols-1 mb-3">
                     <select id="coffee-type" class="p-2 w-full text-sm">
                         <option value="cafe">☕ All Cafes</option>
                         <option value="bakery">🥐 Bakery</option>
@@ -311,15 +334,11 @@
                         <option value="boba">🧋 Boba Tea</option>
                         <option value="donut">🍩 Donuts</option>
                     </select>
-                    <label class="flex items-center gap-2 justify-center bg-gray-100 border-2 border-black px-2 py-2 rounded-lg cursor-pointer w-full">
-                        <input type="checkbox" id="coffee-open" class="w-4 h-4 accent-amber-500 rounded border-2 border-black">
-                        <span class="text-[10px] font-black uppercase">Open Now</span>
-                    </label>
                 </div>
                 <button onclick="runSearch('coffee')" class="w-full py-3 text-sm tracking-wider bg-amber-500 text-white border-3 border-black rounded-full shadow-[4px_4px_0_black] uppercase">Find Caffeine</button>
             </div>
 
-            <div id="roulette-coffee-area" class="hidden mb-4 px-4">
+             <div id="roulette-coffee-area" class="hidden mb-4 px-4">
                 <div class="wheel-container">
                     <canvas id="wheel-canvas-coffee"></canvas>
                     <svg class="wheel-pointer" viewBox="0 0 100 100" style="overflow: visible;">
@@ -354,9 +373,6 @@
             </div>
         </div>
 
-        <div id="view-map" class="tab-view hidden flex flex-col gap-4">
-            <div class="cartoon-card p-2"><div id="map-container"></div></div>
-        </div>
         <div id="view-bill" class="tab-view hidden flex flex-col gap-4">
              <div class="cartoon-card p-5">
                 <h3 class="text-sm font-black text-center mb-4 uppercase border-b-2 border-gray-100 pb-2">💸 Tab Roulette</h3>
@@ -367,12 +383,33 @@
                 </div>
                 <div id="split-result" class="bg-blue-50 border-2 border-black rounded-xl p-4 text-center font-black text-sm uppercase">Waiting...</div>
             </div>
+            
+            <div class="cartoon-card p-5">
+                <h3 class="text-sm font-black text-center mb-4 uppercase border-b-2 border-gray-100 pb-2">💳 Card Roulette</h3>
+                <div id="names-grid" class="grid grid-cols-2 gap-2 mb-3 max-h-40 overflow-y-auto">
+                    <input type="text" class="payer-input p-2 text-sm" placeholder="Name 1">
+                    <input type="text" class="payer-input p-2 text-sm" placeholder="Name 2">
+                </div>
+                <div class="flex gap-2 mb-4">
+                    <button onclick="addNameSlot()" class="flex-1 bg-gray-200 border-2 border-black rounded-lg py-2 text-[10px] font-black uppercase hover:bg-white">+ Add</button>
+                    <button onclick="clearNames()" class="flex-1 bg-gray-200 border-2 border-black rounded-lg py-2 text-[10px] font-black uppercase hover:bg-white">Reset</button>
+                </div>
+                <button id="spin-payer-btn" onclick="spinForPayer()" class="w-full py-4 text-sm bg-green-500 text-white border-3 border-black rounded-full shadow-[4px_4px_0_black] font-black uppercase">Who Pays?</button>
+                <div id="payer-result-box" class="hidden p-6 bg-green-500 border-4 border-black text-white rounded-2xl text-center mt-4 pop-in shadow-[4px_4px_0_black]">
+                    <h2 id="payer-result-name" class="text-3xl font-black italic" style="font-family: 'Titan One';">--</h2>
+                </div>
+            </div>
         </div>
+        
         <div id="view-history" class="tab-view hidden flex flex-col gap-4">
             <div class="cartoon-card p-5 min-h-[400px]">
                 <h3 class="text-sm font-black text-center mb-4 uppercase border-b-2 border-gray-100 pb-2">📜 Chicken Dinner</h3>
                 <div id="history-list" class="flex flex-col gap-3"></div>
             </div>
+        </div>
+        
+        <div id="view-map" class="tab-view hidden flex flex-col gap-4">
+            <div class="cartoon-card p-2"><div id="map-container"></div></div>
         </div>
     </main>
 
@@ -418,6 +455,30 @@
             });
         }
 
+        // --- EXPLICIT GEOLOCATION TRIGGER ---
+        function triggerGeolocation() {
+            const loader = document.getElementById('loader');
+            loader.classList.remove('hidden');
+            if(!navigator.geolocation) {
+                loader.classList.add('hidden');
+                return alert("Geolocation is not supported by your browser.");
+            }
+            navigator.geolocation.getCurrentPosition(
+                (pos) => {
+                    lat = pos.coords.latitude;
+                    lon = pos.coords.longitude;
+                    loader.classList.add('hidden');
+                    document.getElementById('location-status').innerText = "Location Found!";
+                    alert("Location found! You can now click 'Update List'.");
+                },
+                (err) => {
+                    loader.classList.add('hidden');
+                    alert("Error finding location: " + err.message + ". Please enter a Zip Code instead.");
+                },
+                { enableHighAccuracy: true, timeout: 5000 }
+            );
+        }
+
         // --- SEARCH ENGINE ---
         async function runSearch(mode) {
             currentMode = mode;
@@ -426,23 +487,28 @@
             const zip = document.getElementById(mode + '-zip').value.trim();
             const customQuery = document.getElementById(mode + '-custom') ? document.getElementById(mode + '-custom').value.trim() : "";
             
-            try {
-                if (zip) {
+            // PRIORITY: 1. Zip Code, 2. Existing GPS Lat/Lon, 3. Error
+            if (zip) {
+                // If Zip is present, resolve it.
+                try {
                     const r = await fetch(`https://nominatim.openstreetmap.org/search?postalcode=${zip}&country=US&format=json`);
                     const d = await r.json();
                     if(d.length === 0) throw new Error("Zip code not found.");
                     lat = parseFloat(d[0].lat); lon = parseFloat(d[0].lon);
-                } else {
-                    const getPos = (opts) => new Promise((resolve, reject) => navigator.geolocation.getCurrentPosition(resolve, reject, opts));
-                    try {
-                        const pos = await getPos({ enableHighAccuracy: true, timeout: 5000, maximumAge: 0 });
-                        lat = pos.coords.latitude; lon = pos.coords.longitude;
-                    } catch (err) {
-                        const pos = await getPos({ enableHighAccuracy: false, timeout: 10000, maximumAge: 60000 });
-                        lat = pos.coords.latitude; lon = pos.coords.longitude;
-                    }
+                } catch(e) {
+                     alert("Zip Code not found. Please try again.");
+                     loader.classList.add('hidden');
+                     return;
                 }
+            } else if (!lat || !lon) {
+                // No Zip AND No GPS -> Alert user
+                loader.classList.add('hidden');
+                alert("Please click 'Use My Location' OR enter a Zip Code first.");
+                return;
+            }
 
+            // Proceed with search using lat/lon
+            try {
                 const radius = document.getElementById(mode + '-dist').value;
                 let query = "";
                 
@@ -507,7 +573,7 @@
 
             } catch(e) { 
                 console.error(e);
-                alert("Location Error: Please ensure GPS is allowed or enter a Zip Code."); 
+                alert("Could not fetch locations. The API might be busy. Please try again in 10 seconds."); 
                 loader.classList.add('hidden'); 
             }
         }
@@ -534,21 +600,17 @@
 
         // --- ICON LOGIC ---
         function getIconForType(type, mode) {
-            // STRICT MODE for Bar: Only drinks
             if (mode === 'bar') {
                 return DRINK_ICONS[Math.floor(Math.random() * DRINK_ICONS.length)];
             }
-
             if(!type) return mode === 'coffee' ? '☕' : '🍽️';
             const t = type.toLowerCase();
             
-            // Coffee/Tea specific
             if(t.includes('coffee') || t.includes('cafe')) return '☕';
             if(t.includes('tea')) return '🍵';
             if(t.includes('bubble') || t.includes('boba')) return '🧋';
             if(t.includes('bakery') || t.includes('donut')) return '🍩';
 
-            // Food
             if(t.includes('pizza')) return '🍕';
             if(t.includes('burger')) return '🍔';
             if(t.includes('taco') || t.includes('mexican')) return '🌮';
@@ -646,8 +708,6 @@
                     const progress = Math.min(elapsed / duration, 1);
                     const ease = 1 - Math.pow(1 - progress, 5); 
                     const currentRotation = targetRotation * ease;
-                    
-                    // Pass MODE to drawWheel to enforce specific emojis
                     drawWheel(canvasId, wheelItems, currentRotation, mode);
 
                     if (progress < 1) requestAnimationFrame(animate);
@@ -683,6 +743,29 @@
             if(t>0&&n>0) document.getElementById('split-result').innerText = `TOTAL: $${(t*(1+tp)).toFixed(2)} | $${(t*(1+tp)/n).toFixed(2)} EACH`;
         }
         ['bill-total','tip-percent','people-count'].forEach(id=>document.getElementById(id).addEventListener('input',updateSplit));
+
+        // --- RESTORED CARD ROULETTE LOGIC ---
+        function spinForPayer() {
+            const names = Array.from(document.querySelectorAll('.payer-input')).map(i=>i.value.trim()).filter(n=>n!=="");
+            if(names.length<2) return alert("Need 2+ players");
+            document.getElementById('payer-result-box').classList.remove('hidden');
+            let t = setInterval(() => { document.getElementById('payer-result-name').innerText = names[Math.floor(Math.random()*names.length)]; }, 70);
+            setTimeout(() => clearInterval(t), 2000);
+        }
+
+        function addNameSlot() {
+            const grid = document.getElementById('names-grid');
+            if(grid.children.length < 10) {
+                const i = document.createElement('input');
+                i.className = "payer-input p-2 text-sm border-2 border-black rounded-lg font-bold bg-white";
+                i.placeholder = `Name ${grid.children.length + 1}`;
+                grid.appendChild(i);
+            }
+        }
+        function clearNames() { 
+            document.getElementById('names-grid').innerHTML = `<input type="text" class="payer-input p-2 text-sm" placeholder="Name 1"><input type="text" class="payer-input p-2 text-sm" placeholder="Name 2">`;
+            document.getElementById('payer-result-box').classList.add('hidden');
+        }
 
         function saveToHist(p) { 
             history.unshift({ name: p.name, rating: p.rating, time: new Date().toLocaleTimeString([], {hour:'2-digit', minute:'2-digit'}) }); 
