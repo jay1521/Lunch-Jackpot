@@ -79,7 +79,6 @@
         .roulette-item:nth-child(odd) { background-color: #E1F5FE; }
         .roulette-item:nth-child(even) { background-color: #FFF3E0; }
 
-        /* --- UPDATED SPIN DURATION TO 6s --- */
         .spinning { animation: slideUp 6s cubic-bezier(0.1, 1, 0.2, 1) forwards; }
         @keyframes slideUp { 0% { transform: translateY(0); } 100% { transform: translateY(var(--scroll-distance)); } }
         
@@ -106,7 +105,7 @@
     <nav class="fixed bottom-4 left-1/2 -translate-x-1/2 w-[95%] max-w-md bg-white border-4 border-black rounded-2xl p-2 z-[1000] shadow-[6px_6px_0px_0px_rgba(0,0,0,1)]">
         <div class="flex flex-wrap justify-center gap-1">
             <button onclick="switchTab('jackpot')" id="tab-jackpot" class="tab-btn active flex-grow w-[30%] py-2 text-[8px] font-black uppercase">🍔 Dine & Dice</button>
-            <button onclick="switchTab('bar')" id="tab-bar" class="tab-btn flex-grow w-[30%] py-2 text-[8px] font-black uppercase">🍸 21+ (Bets Off)</button>
+            <button onclick="switchTab('bar')" id="tab-bar" class="tab-btn flex-grow w-[30%] py-2 text-[8px] font-black uppercase">🍸 21+</button>
             <button onclick="switchTab('map')" id="tab-map" class="tab-btn flex-grow w-[30%] py-2 text-[8px] font-black uppercase">🗺️ Map</button>
             
             <button onclick="switchTab('bill')" id="tab-bill" class="tab-btn flex-grow w-[45%] py-2 text-[8px] font-black uppercase">💸 Tab Roulette</button>
@@ -176,7 +175,7 @@
 
         <div id="view-bar" class="tab-view hidden flex flex-col gap-4">
             <div class="cartoon-card p-4 border-purple-900">
-                <h3 class="text-xs font-black uppercase mb-2 text-center text-purple-600">🍸 All Bets Are Off (21+)</h3>
+                <h3 class="text-xs font-black uppercase mb-2 text-center text-purple-600">🍸 21+ Only</h3>
                 <div class="grid grid-cols-2 gap-3 mb-3">
                     <input type="text" id="bar-zip" placeholder="Zip Code" class="p-2 w-full text-sm">
                     <select id="bar-dist" class="p-2 w-full text-sm">
@@ -223,7 +222,7 @@
                 </div>
             </div>
 
-            <button id="spin-bar" disabled class="w-full py-5 text-xl tracking-widest mb-4 bg-purple-500 text-white border-3 border-black rounded-full shadow-[4px_4px_0_black] font-black uppercase">SPIN FOR DRINKS!</button>
+            <button id="spin-bar" disabled class="w-full py-5 text-xl tracking-widest mb-4 bg-purple-500 text-white border-3 border-black rounded-full shadow-[4px_4px_0_black] font-black uppercase">ROLL THE DICE!</button>
 
             <div class="cartoon-card p-4">
                 <h3 class="text-xs font-black uppercase mb-3 text-gray-400">👇 Watering Holes</h3>
@@ -314,7 +313,7 @@
             });
         }
 
-        // --- SEARCH ENGINE WITH IOS FIX ---
+        // --- SEARCH ENGINE WITH STRICT FILTER ---
         async function runSearch(mode) {
             currentMode = mode;
             const loader = document.getElementById('loader');
@@ -328,16 +327,12 @@
                     if(d.length === 0) throw new Error("Zip code not found.");
                     lat = parseFloat(d[0].lat); lon = parseFloat(d[0].lon);
                 } else {
-                    // FIX: Retry mechanism for iOS
+                    // RETRY LOGIC FOR GPS
                     const getPos = (opts) => new Promise((resolve, reject) => navigator.geolocation.getCurrentPosition(resolve, reject, opts));
-                    
                     try {
-                        // Attempt 1: High Accuracy
                         const pos = await getPos({ enableHighAccuracy: true, timeout: 5000, maximumAge: 0 });
                         lat = pos.coords.latitude; lon = pos.coords.longitude;
                     } catch (err) {
-                        // Attempt 2: Low Accuracy / Cached (Fixes 'string pattern' error)
-                        console.log("High accuracy failed, trying low accuracy...");
                         const pos = await getPos({ enableHighAccuracy: false, timeout: 10000, maximumAge: 60000 });
                         lat = pos.coords.latitude; lon = pos.coords.longitude;
                     }
@@ -352,7 +347,8 @@
                     query = `[out:json];(node["amenity"~"restaurant|fast_food"]${filter}(around:${radius},${lat},${lon}););out 30;`;
                 } else {
                     const vibe = document.getElementById('bar-vibe').value; 
-                    const filter = vibe !== 'bar' ? `["amenity"="${vibe}"]` : '["amenity"~"bar|pub|nightclub|lounge|biergarten"]';
+                    // STRICT REGEX TO AVOID LIBRARIES/BOOKCASES
+                    const filter = vibe !== 'bar' ? `["amenity"="${vibe}"]` : `["amenity"~"^(bar|pub|nightclub|lounge|biergarten)$"]`;
                     query = `[out:json];(node${filter}(around:${radius},${lat},${lon}););out 30;`;
                 }
                 
@@ -435,9 +431,7 @@
                     document.getElementById('menu-' + mode).href = `https://www.google.com/search?q=${encodeURIComponent(currentWinner.name + ' Menu')}`;
                     
                     document.getElementById('result-' + mode).classList.remove('hidden');
-                    
-                    // UPDATE BUTTON TEXT
-                    btn.innerText = "ROLL AGAIN";
+                    btn.innerText = "ROLL AGAIN"; // Change text to "Roll Again"
                     
                     saveToHist(currentWinner);
                 }, {once: true});
